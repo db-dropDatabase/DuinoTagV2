@@ -19,3 +19,5 @@ At least 2 Arduinos (to send and recieve). <a href="http://www.aliexpress.com/it
 
 56khz IR receivers and Diodes (you can find them at mouser or digikey)
 
+TODO: Document code
+
