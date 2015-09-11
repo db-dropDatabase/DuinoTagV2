@@ -29,21 +29,13 @@ The above is no longer valid :/
 
 #include <Arduino.h>
 
-#include <StandardCplusplus.h>
-#include <system_configuration.h>
-#include <unwind-cxx.h>
-#include <utility.h>
-
 #include "IRremote.h"
 
 #include "toneAC.h"
 
 #include "Adafruit_NeoPixel.h"
 
-#include <bitset>
-#include <string>
-
-#define myByte bitset<8>
+#define myByte unsigned int
 
 #define constDelay 1000
 #define sPacketLength 29
@@ -55,7 +47,7 @@ const int frequency = 56;
 #define rightPin 6
 #define hitPin A0
 #define buzzerPin 10 //other pins, with buzzer both 9 and 10 are taken
-#define triggerPin 2
+#define triggerPin 12
 #define neoPin 11
 
 using namespace std;
@@ -82,11 +74,12 @@ int milesDamage(myByte damageIn);
 int byteToInt(myByte convert);
 bool initPin(int pinNum);
 int decodePulse(int pulseLength);
+void intToBool(unsigned int input, unsigned int start,  unsigned int len, char *ray);
 /*--MARIMOLE-DEF_END--*/
 
 typedef struct {
-	myByte data1;//1 bit for packet type, 7 bits for playerID 
-	myByte data2;  //6 or 8 bits for team and damage or message data
+	bool data1[8];//1 bit for packet type, 7 bits for playerID 
+	bool data2[8];  //6 or 8 bits for team and damage or message data
 }packet;
 
 enum arduinoLights {

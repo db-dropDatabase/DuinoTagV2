@@ -15,16 +15,15 @@ void setup(){
 	delay(200);
 	Serial.println("Booting up...");
 	#endif
-	pinMode(triggerPin, INPUT_PULLUP);
+	//pinMode(triggerPin, INPUT_PULLUP);
 	pinMode(13,OUTPUT); //used as game indicator during setup
-	recver.enableIRIn();
-	#ifdef DEBUG
-	Serial.println("IR initilization done");
-	#endif
 	laser.setup(0x02,0x10,&recver);
 	laser.clipSize=100;
 	laser.clipNum=25;
 	laser.startHealth=0x24;
+	#ifdef DEBUG
+	Serial.println("IR initilization done");
+	#endif
 	#ifdef DEBUG
 	Serial.println("Suit setup done");
 	#endif

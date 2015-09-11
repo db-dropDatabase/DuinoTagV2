@@ -14,7 +14,7 @@ using namespace std;
 
 //miles library
 int byteToInt(myByte convert){
-	return static_cast<int>(convert.to_ulong());
+	//do later
 }
 
 int milesDamage(int damageIn){
@@ -91,10 +91,10 @@ int milesDamage(int damageIn){
 	}
 }
 int milesRPM(myByte rpm){
-	return (byteToInt(rpm)*50)+250;
+	return (rpm*50)+250;
 }
 int milesHealth(myByte health){
-	int in = byteToInt(health);
+	int in = health;
 	int out;
 	if(in <= 20){
 		out = in;
@@ -106,7 +106,7 @@ int milesHealth(myByte health){
 }
 double MHitDelay(myByte in){
 	double out;
-	switch(byteToInt(in)){
+	switch(in){
 		case 0:
 		out=0;
 		break;
@@ -120,7 +120,7 @@ double MHitDelay(myByte in){
 		out=0.75;
 		break;
 		default:
-		out=(byteToInt(in)-3.0);
+		out=(in-3.0);
 		break;
 	}
 	return out;
@@ -213,7 +213,7 @@ bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	right.setBrightness(32);
 	
 	for(int i=0; i<8; i++){
-		switch(byteToInt(team)){
+		switch(team){
 		case 0:
 			left.setPixelColor(i, 55, 128, 255);
 			right.setPixelColor(i, 55, 128, 255);
@@ -680,15 +680,43 @@ lasergun will shoot and control ammo, reload, etc.
 
 //for now, I will assume that the packet receiving is handled by something else
 //let's write some functions
+void intToBool(unsigned int input, unsigned int start,  unsigned int len, char * ray){
+	unsigned int mod=2;
+	while(input>0||len>0){
+		if(input%mod>0){
+			*(ray+start) = '1';
+		}
+		else{
+			*(ray+start) = '0';
+		}
+		input-=input%mod;
+		start++;
+		len--;
+		mod*=2;
+	}
+}
+
+int boolToInt(bool input[8]){
+	int out=0;
+	int adder=256;
+	for(int i=7; i>=0; i--){
+		if(input[i] == 1){
+			out += adder;
+		}
+		adder/=2;
+	}
+	return out;
+}
+
 void Suit::setUpPacket(){
-	bitset<7> partOne = byteToInt(playerID);
-	bitset<2> partTwo = byteToInt(teamID);
-	bitset<4> partThree = byteToInt(damage);
-	string send = partOne.to_string<char,std::string::traits_type,std::string::allocator_type>() + partTwo.to_string<char,std::string::traits_type,std::string::allocator_type>() + partThree.to_string<char,std::string::traits_type,std::string::allocator_type>();
+	char packet[15] = {};
+	intToBool(playerID, 0, 7, &packet[15]);
+	intToBool(teamID, 8, 2, &packet[15]);
+	intToBool(damage, 11, 4, &packet[15]);
 	#ifdef DEBUG
 	Serial.println("String Packet: ");
 	for(int i=0; i<13; i++){
-		Serial.print(send[i]);
+		Serial.print(packet[i]);
 		Serial.print(", ");
 	}
 	Serial.println("");
@@ -700,7 +728,7 @@ void Suit::setUpPacket(){
 	int bitcounter=0;
 	for(int i=4; i<30; i++){
 		if(!(i & 1)){ //alternating
-			if(send[bitcounter]=='0'){
+			if(packet[bitcounter]=='0'){
 				shotPacket[i] = 600; //0
 			}
 			else{
@@ -762,9 +790,6 @@ bool Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	tmpTime=0;
 	currentAmmo=0;
 	rpmDelay=1000/(milesRPM(rpm)/60);
-	#ifdef DEBUG
-	Serial.println("Setup Done!");
-	#endif
 	setUpPacket();
 	//IR
 	if(showMe!=NULL){
@@ -802,7 +827,7 @@ parsedPacket Suit::readPacket(packet packetYay){
 			if(friendlyFire){
 				packetYay.data2[6] = 0;
 				packetYay.data2[7] = 0; //wipe the teamID so I can grab the damage
-				superYay.amount= milesDamage((byteToInt(packetYay.data2)/4)); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
+				superYay.amount= milesDamage((boolToInt(packetYay.data2)/4)); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
 				superYay.whatToDo=cShot;
 			}
 			else{
@@ -812,7 +837,7 @@ parsedPacket Suit::readPacket(packet packetYay){
 		else{
 			packetYay.data2[6] = 0;
 			packetYay.data2[7] = 0;
-			superYay.amount= milesDamage((byteToInt(packetYay.data2)/4)); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
+			superYay.amount= milesDamage((boolToInt(packetYay.data2)/4)); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
 			superYay.whatToDo=cShot;
 		}
 		
@@ -822,11 +847,11 @@ parsedPacket Suit::readPacket(packet packetYay){
 		#ifdef DEBUG
 		Serial.println("Mesasage packet!");
 		#endif
-		int testing1 = byteToInt(packetYay.data1);
-		int testing2 = byteToInt(packetYay.data2)-256;
+		int testing1 = boolToInt(packetYay.data1);
+		int testing2 = boolToInt(packetYay.data2);
 		#ifdef DEBUG
-		Serial.println(byteToInt(packetYay.data1));
-		Serial.println(byteToInt(packetYay.data2));//goddammit compiler
+		Serial.println(boolToInt(packetYay.data1));
+		Serial.println(boolToInt(packetYay.data2));
 		#endif
 		int amountOrCommand = testing2; 
 		switch(testing1){
@@ -1268,8 +1293,6 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	if(recv->decode(&results)){
 		while(display.update()){}
 		packet outPacket;
-		outPacket.data1=0x00;
-		outPacket.data2=0x00;
 		int counter=15;
 		int i=0;
 		while((results.rawbuf[i]<40||results.rawbuf[i]>60)&&i<results.rawlen){
