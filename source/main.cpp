@@ -7,13 +7,12 @@ using namespace std;
 Suit laser;
 IRrecv recver(4);  // I KNOW I SPELLED IT WRONG
 decode_results results;
-int counter=0;
-long int lastTime=0;
-long int otherTime=0;
+//long int lastTime=0;
 
 void setup(){
 	#ifdef DEBUG
 	Serial.begin(9600);
+	delay(200);
 	Serial.println("Booting up...");
 	#endif
 	pinMode(triggerPin, INPUT_PULLUP);
@@ -22,7 +21,7 @@ void setup(){
 	#ifdef DEBUG
 	Serial.println("IR initilization done");
 	#endif
-	laser.setup(0x00,0x10,&recver);
+	laser.setup(0x02,0x10,&recver);
 	laser.clipSize=100;
 	laser.clipNum=25;
 	laser.startHealth=0x24;
@@ -35,26 +34,15 @@ void setup(){
 	digitalWrite(13, HIGH);
 	delay(5000);
 	digitalWrite(13, LOW);
-	laser.currentHealth=100;
-	laser.currentArmor=5;
-	lastTime=millis();
 }
 
 
 void loop(){
-	counter+=millis()-lastTime;
-	lastTime=millis();
-	if(counter > 300){
-		if(!laser.gunCommand(gShoot,0)){
-			laser.gunCommand(gReload,0);
-		}
-		counter=0;
-	}
+	//if(millis()-lastTime > 5000){
+	//	laser.gunCommand(gShoot,0);
+	//	lastTime=millis();
+	//}
 	if(laser.checkStatus()){
-		otherTime=millis();
-		while(millis()-otherTime<5000){
-			laser.checkStatus();
-		}
 		laser.sCommand(cRespawn,0);
 	}
 }

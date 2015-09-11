@@ -211,10 +211,7 @@ bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	neopix.setBrightness(32);
 	left.setBrightness(32);
 	right.setBrightness(32);
-	#ifdef DEBUG
-	Serial.println(byteToInt(team));
-	Serial.println("yay!");
-	#endif
+	
 	for(int i=0; i<8; i++){
 		switch(byteToInt(team)){
 		case 0:
@@ -287,51 +284,51 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		writePin(rightPin,HIGH);
 		break;
 		case muzzleOn:
-		#ifdef DEBUG
-		Serial.println("Muzzle on");
-		#endif
+		//#ifdef DEBUG
+		//Serial.println("Muzzle on");
+		//#endif
 		writePin(muzzlePin, HIGH);
 		break;
 		case muzzleOff:
-		#ifdef DEBUG
-		Serial.println("Muzzle off");
-		#endif
+		//#ifdef DEBUG
+		//Serial.println("Muzzle off");
+		//#endif
 		writePin(muzzlePin, LOW);
 		break;
 		case hitOn:
-		#ifdef DEBUG
-		Serial.println("Hit LED on");
-		#endif
+		//#ifdef DEBUG
+		//Serial.println("Hit LED on");
+		//#endif
 		writePin(hitPin, HIGH);
 		break;
 		case hitOff:
-		#ifdef DEBUG
-		Serial.println("Hit LED off");
+		//#ifdef DEBUG
+		//Serial.println("Hit LED off");
+		//#endif
 		writePin(hitPin, LOW);
-		#endif
 		break;
 		case rightOn:
-		#ifdef DEBUG
-		Serial.println("Right on");
-		#endif
+		//#ifdef DEBUG
+		//Serial.println("Right on");
+		//#endif
 		writePin(rightPin, HIGH);
 		break;
 		case rightOff:
-		#ifdef DEBUG
-		Serial.println("Right off");
-		#endif
+		//#ifdef DEBUG
+		//Serial.println("Right off");
+		//#endif
 		writePin(rightPin, LOW);
 		break;
 		case leftOn:
-		#ifdef DEBUG
-		Serial.println("Left on");
-		#endif
+		//#ifdef DEBUG
+		//Serial.println("Left on");
+		//#endif
 		writePin(leftPin, HIGH);
 		break;
 		case leftOff:
-		#ifdef DEBUG
-		Serial.println("Left off");
-		#endif
+		//#ifdef DEBUG
+		//Serial.println("Left off");
+		//#endif
 		writePin(leftPin, LOW);
 		break;
 		case Tdelay:
@@ -721,6 +718,7 @@ void Suit::setUpPacket(){
 bool Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	//set all values to defaults except for the modifiers
 	//first set modifiers
+	
 	teamID = iTeamID;
 	playerID = iPlayerID;
 	//now set the defaults!
@@ -764,6 +762,9 @@ bool Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	tmpTime=0;
 	currentAmmo=0;
 	rpmDelay=1000/(milesRPM(rpm)/60);
+	#ifdef DEBUG
+	Serial.println("Setup Done!");
+	#endif
 	setUpPacket();
 	//IR
 	if(showMe!=NULL){
@@ -818,8 +819,17 @@ parsedPacket Suit::readPacket(packet packetYay){
 	}
 	else{
 		//b/c of the leading one in packet type, all messages are 128+whatever
-		int amountOrCommand = byteToInt(packetYay.data2);
-		switch(byteToInt(packetYay.data1)){
+		#ifdef DEBUG
+		Serial.println("Mesasage packet!");
+		#endif
+		int testing1 = byteToInt(packetYay.data1);
+		int testing2 = byteToInt(packetYay.data2)-256;
+		#ifdef DEBUG
+		Serial.println(byteToInt(packetYay.data1));
+		Serial.println(byteToInt(packetYay.data2));//goddammit compiler
+		#endif
+		int amountOrCommand = testing2; 
+		switch(testing1){
 			case 128:
 			superYay.whatToDo = cAddHealth;
 			superYay.amount = amountOrCommand;
@@ -982,6 +992,8 @@ void Suit::sCommand(SuitCommmands command, int amount){
 			isDead=true;
 			gunCommand(gStop,0);
 			display.playLights(pLightsDead);
+			while(display.update()){}
+			display.playIdle();
 			display.changeValues(0,0,0);
 			display.update(); //no health left!
 		}
@@ -1003,6 +1015,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 				gunCommand(gFullAmmo,0);
 				display.setup(milesHealth(startHealth), clipSize, armor, teamID);
 				display.playLights(pLightsGameOn);
+				while(display.update()){}
 				#ifdef DEBUG
 				Serial.println("Game started!");
 				#endif
@@ -1270,7 +1283,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		}
 		Serial.println("");
 		#endif
-		for(; i<results.rawlen; i+=2){
+		for(; i<results.rawlen && counter>=0; i+=2){
 			switch(decodePulse(results.rawbuf[i])){
 				case 0:
 				if(counter<8 && counter >= 0){
@@ -1297,14 +1310,46 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 			}
 		}
 		if(counter < 0){
-			#ifdef DEBUG
-			Serial.println("Packet was too long! dropping...");
-			#endif
-			if(currentHealth<1 && !isDead){
+			/*
+			int otherInt=7;
+			//verify message terminator
+			myByte terminator=0x00;
+			for(; i<results.rawlen && counter>=0; i+=2){
+				switch(decodePulse(results.rawbuf[i])){
+					case 0:
+					terminator[otherInt]=false;
+					otherInt--;
+					break;
+					case 1:
+					terminator[otherInt]=true;
+					otherInt--;
+					break;
+					default:
+					break;
+				}
+			}
+			myByte check = 0xe8;
+			if(terminator != check){
+				#ifdef DEBUG
+				Serial.println("Terminators do not match!");
+				for(int i=0; i<8; i++){
+					Serial.print(terminator.test(i));
+				}
+				Serial.println(check.to_ulong());
+				#endif
+				if(currentHealth<1 && !isDead){
 				isDead=true;
 				display.playLights(pLightsDead);
+				}
+				recv->enableIRIn();
+				recv->resume();
+				return isDead;
 			}
-			return isDead;
+			#ifdef DEBUG
+			Serial.println("Terminators Match!");
+			#endif
+			ARGHHHHHHHH
+			*/
 		}
 		if(!action(outPacket)){
 			#ifdef DEBUG
@@ -1321,6 +1366,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	}
 	if(currentHealth<1 && !isDead){
 		display.playLights(pLightsDead);
+		while(display.update()){}
 		display.playIdle();
 		delay(255);
 		display.update();

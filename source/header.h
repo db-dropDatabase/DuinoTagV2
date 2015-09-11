@@ -85,9 +85,8 @@ int decodePulse(int pulseLength);
 /*--MARIMOLE-DEF_END--*/
 
 typedef struct {
-	myByte data1;//1 bit for packet type, 7 bits for playerID or messageID
+	myByte data1;//1 bit for packet type, 7 bits for playerID 
 	myByte data2;  //6 or 8 bits for team and damage or message data
-	//used only in message packet
 }packet;
 
 enum arduinoLights {
