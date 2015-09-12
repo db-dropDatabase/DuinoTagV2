@@ -38,7 +38,7 @@ void setup(){
 
 
 void loop(){
-	if(millis()-lastTime > 300){
+	if(millis()-lastTime > 10000){
 		laser.gunCommand(gShoot,0);
 		lastTime=millis();
 	}

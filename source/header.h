@@ -64,6 +64,7 @@ void setup();
 //bool Arduino::playLights(arduinoLights command);
 class Arduino;
 class Suit;
+class Stats;
 class Lasergun;
 class IRrecv;
 class IRsend;
@@ -148,6 +149,12 @@ enum SuitCommmands{  //also includes message packet commands
 		gFullAmmo,
 		gTest
 	};
+	enum statCommand{
+		sHit,
+		sShot,
+		sReload,
+		sDeath
+	};
 	
 	typedef struct {
 		SuitCommmands whatToDo;
@@ -167,8 +174,6 @@ enum SuitCommmands{  //also includes message packet commands
 		void changeValues(double aHealth, double aAmmo, double aArmor);
 		void playPew(); //pew needs to behave differently than other sounds, so yeah
 		void playIdle();
-		Adafruit_NeoPixel left;
-		Adafruit_NeoPixel right;
 		private:
 		arduinoLights commandBuffer[5];
 		bool lightCommand(const lightControl steps[15]);
@@ -191,8 +196,22 @@ enum SuitCommmands{  //also includes message packet commands
 		double armorDisp;
 		
 		Adafruit_NeoPixel neopix;
+		Adafruit_NeoPixel left;
+		Adafruit_NeoPixel right;
 	};
 	
+	class Stats{
+		public:
+		int	calculate(statCommand command);
+		void returnHits(int * ray);
+		void addValue(statCommand command, int input);
+		void reset();
+		private:
+		unsigned int hitCount[127]; //I got hit x times by x!
+		unsigned int deathCount;
+		unsigned int shotCount;
+		unsigned int reloadCount;
+	};
 	
 	class Suit{
 		public:
@@ -227,6 +246,8 @@ enum SuitCommmands{  //also includes message packet commands
 		//will add score and cloning packets later
 		bool action(packet packetYay); //put in packet, out goes lasers!
 		void sCommand(SuitCommmands command, int amount);
+		
+		Stats stat;
 		
 		//test merging of classes
 		//gun stuff

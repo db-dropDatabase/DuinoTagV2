@@ -789,6 +789,7 @@ bool Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	currentAmmo=0;
 	rpmDelay=1000/(milesRPM(rpm)/60);
 	setUpPacket();
+	stat.reset();
 	//IR
 	if(showMe!=NULL){
 		recv = showMe;
@@ -827,6 +828,7 @@ parsedPacket Suit::readPacket(packet packetYay){
 				packetYay.data2[7] = 0; //wipe the teamID so I can grab the damage
 				superYay.amount= milesDamage((boolToInt(packetYay.data2)/4)); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
 				superYay.whatToDo=cShot;
+				stat.addValue(sHit, boolToInt(packetYay.data1)-128);
 			}
 			else{
 				superYay.whatToDo=cNull;
@@ -1013,6 +1015,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		case cKill:
 		{
 			isDead=true;
+			stat.addValue(sDeath,1);
 			gunCommand(gStop,0);
 			display.playLights(pLightsDead);
 			while(display.update()){}
@@ -1105,6 +1108,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		case cExplodePlayer:
 		{
 			isDead=true;
+			stat.addValue(sDeath,1);
 			gunCommand(gStop,0);
 			display.playLights(pLightsDead);
 		}
@@ -1195,6 +1199,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				Serial.println(rpmDelay);
 				#endif
 				currentDelay=rpmDelay;
+				stat.addValue(sShot,1);
 				display.playPew();
 				return true;
 			}
@@ -1248,6 +1253,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 					checkStatus();
 				}
 				currentClip=clipSize;
+				stat.addValue(sReload,1);
 				return true;
 			}
 			else{
@@ -1330,11 +1336,11 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 				break;
 			}
 		}
+		/*
 		if(counter < 0){
-			/*
 			int otherInt=7;
 			//verify message terminator
-			myByte terminator=0x00;
+			bool terminator[8];
 			for(; i<results.rawlen && counter>=0; i+=2){
 				switch(decodePulse(results.rawbuf[i])){
 					case 0:
@@ -1349,18 +1355,17 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 					break;
 				}
 			}
-			myByte check = 0xe8;
-			if(terminator != check){
+			if(boolToInt(terminator) != 0xe8){
 				#ifdef DEBUG
 				Serial.println("Terminators do not match!");
 				for(int i=0; i<8; i++){
-					Serial.print(terminator.test(i));
+					Serial.print(terminator[i]);
 				}
-				Serial.println(check.to_ulong());
 				#endif
 				if(currentHealth<1 && !isDead){
-				isDead=true;
-				display.playLights(pLightsDead);
+					isDead=true;
+					stat.addValue(sDeath,1);
+					display.playLights(pLightsDead);
 				}
 				recv->enableIRIn();
 				recv->resume();
@@ -1369,9 +1374,8 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 			#ifdef DEBUG
 			Serial.println("Terminators Match!");
 			#endif
-			ARGHHHHHHHH
-			*/
 		}
+		*/
 		if(!action(outPacket)){
 			#ifdef DEBUG
 			Serial.println("Parsing packet failed!");
@@ -1390,6 +1394,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		while(display.update()){}
 		display.playIdle();
 		delay(255);
+		stat.addValue(sDeath,1);
 		isDead=true;
 	}
 	if(currentClip>0){ //reload function will handle it
@@ -1397,4 +1402,56 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	}
 	display.update();
 	return isDead;
+}
+
+//Stats machine
+void Stats::reset(){
+	for(int i=0; i<127; i++){
+		hitCount[i]=0;
+	}
+	deathCount=0;
+	shotCount=0;
+	reloadCount=0;
+}
+
+int Stats::calculate(statCommand command){
+	switch(command){
+		case sShot:
+			return shotCount;
+			break;
+		case sDeath:
+			return deathCount;
+			break;
+		case sReload:
+			return reloadCount;
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+void Stats::returnHits(int * ray){
+	for(int i=0; i<127; i++){
+		ray[i] = hitCount[i];
+	}
+}
+
+void Stats::addValue(statCommand command, int input){
+	switch(command){
+		case sShot:
+			shotCount+=input;
+			break;
+		case sDeath:
+			deathCount+=input;	
+			break;
+		case sReload:
+			reloadCount+=input;
+			break;
+		case sHit:
+			hitCount[input]++;
+			break;
+		default:
+			break;
+	}
 }
