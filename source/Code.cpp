@@ -13,9 +13,6 @@ using namespace std;
 //hopefully
 
 //miles library
-int byteToInt(myByte convert){
-	//do later
-}
 
 int milesDamage(int damageIn){
 	//damage table shown below:
@@ -680,17 +677,18 @@ lasergun will shoot and control ammo, reload, etc.
 
 //for now, I will assume that the packet receiving is handled by something else
 //let's write some functions
-void intToBool(unsigned int input, unsigned int start,  unsigned int len, char * ray){
+void intToBool(unsigned int input, unsigned int start, unsigned int len, bool * ray){
 	unsigned int mod=2;
-	while(input>0||len>0){
+	start += len-1;
+	while(input>0 || len>0){
 		if(input%mod>0){
-			*(ray+start) = '1';
+			ray[start] = true;
 		}
 		else{
-			*(ray+start) = '0';
+			ray[start] = false;
 		}
 		input-=input%mod;
-		start++;
+		start--;
 		len--;
 		mod*=2;
 	}
@@ -698,7 +696,7 @@ void intToBool(unsigned int input, unsigned int start,  unsigned int len, char *
 
 int boolToInt(bool input[8]){
 	int out=0;
-	int adder=256;
+	int adder=128;
 	for(int i=7; i>=0; i--){
 		if(input[i] == 1){
 			out += adder;
@@ -709,10 +707,10 @@ int boolToInt(bool input[8]){
 }
 
 void Suit::setUpPacket(){
-	char packet[15] = {};
-	intToBool(playerID, 0, 7, &packet[15]);
-	intToBool(teamID, 8, 2, &packet[15]);
-	intToBool(damage, 11, 4, &packet[15]);
+	bool packet[13];
+	intToBool(playerID,0,7,packet);
+	intToBool(teamID,7,2,packet);
+	intToBool(damage,9,4,packet);
 	#ifdef DEBUG
 	Serial.println("String Packet: ");
 	for(int i=0; i<13; i++){
@@ -728,7 +726,7 @@ void Suit::setUpPacket(){
 	int bitcounter=0;
 	for(int i=4; i<30; i++){
 		if(!(i & 1)){ //alternating
-			if(packet[bitcounter]=='0'){
+			if(packet[bitcounter]==false){
 				shotPacket[i] = 600; //0
 			}
 			else{
@@ -819,7 +817,7 @@ parsedPacket Suit::readPacket(packet packetYay){
 		//shot packet
 		//add stats here later
 		int tmpTeamID = 2*packetYay.data2[7] + packetYay.data2[6];
-		if(tmpTeamID == byteToInt(teamID)){ //checks to see if shot by friend or foe, and if friendlyfire is on
+		if(tmpTeamID == teamID){ //checks to see if shot by friend or foe, and if friendlyfire is on
 			//take damage, and if I make a stats machine record player I
 			#ifdef DEBUG
 			Serial.println("teamID is the same as shooter teamid");
@@ -1032,10 +1030,10 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		{
 			if(!respawns){
 				//varibles! yay!
-				delayMicroseconds(byteToInt(startDelay));
+				delayMicroseconds(startDelay);
 				respawns=true;
 				currentHealth=milesHealth(startHealth);
-				currentArmor=byteToInt(armor);
+				currentArmor=armor;
 				isDead=false;
 				gunCommand(gFullAmmo,0);
 				display.setup(milesHealth(startHealth), clipSize, armor, teamID);
@@ -1060,13 +1058,13 @@ void Suit::sCommand(SuitCommmands command, int amount){
 				if(respawnLimit){
 					numRespawns++;
 				}
-				if(numRespawns <= byteToInt(maxRespawn)){
+				if(numRespawns <= maxRespawn){
 					#ifdef DEBUG
 					Serial.println("Respawn!");
 					#endif
 					isDead=false;
 					currentHealth=milesHealth(startHealth);
-					currentArmor=byteToInt(armor);
+					currentArmor=armor;
 					gunCommand(gFullAmmo,0);
 					display.setup(milesHealth(startHealth), clipSize, armor, teamID);
 					display.playLights(pLightsGameOn);
@@ -1078,7 +1076,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		{
 			respawns=true;
 			currentHealth=milesHealth(startHealth);
-			currentArmor=byteToInt(armor);
+			currentArmor=armor;
 			isDead=false;
 			gunCommand(gFullAmmo,0);
 			display.reset();
@@ -1124,7 +1122,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cFullArmor:
 		{
-			currentArmor=byteToInt(armor);
+			currentArmor=armor;
 			display.playLights(pLightsGameOn);
 		}
 		break;
@@ -1271,8 +1269,8 @@ bool Suit::gunCommand(GunCommands command, int amount){
 		break;
 		case gFullAmmo:
 		{
-			currentClip=byteToInt(clipSize);
-			currentAmmo=byteToInt(clipNum);
+			currentClip=clipSize;
+			currentAmmo=clipNum;
 			return true;
 		}
 		break;
@@ -1392,7 +1390,6 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		while(display.update()){}
 		display.playIdle();
 		delay(255);
-		display.update();
 		isDead=true;
 	}
 	if(currentClip>0){ //reload function will handle it

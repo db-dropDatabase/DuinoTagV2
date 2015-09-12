@@ -71,10 +71,9 @@ double MHitDelay(myByte in);
 int milesHealth(myByte health);
 int milesRPM(myByte rpm);
 int milesDamage(myByte damageIn);
-int byteToInt(myByte convert);
 bool initPin(int pinNum);
 int decodePulse(int pulseLength);
-void intToBool(unsigned int input, unsigned int start,  unsigned int len, char *ray);
+void intToBool(unsigned int input, unsigned int start, unsigned int len, char * ray);
 /*--MARIMOLE-DEF_END--*/
 
 typedef struct {
