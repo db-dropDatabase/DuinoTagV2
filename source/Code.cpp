@@ -211,27 +211,27 @@ bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	
 	for(int i=0; i<8; i++){
 		switch(team){
-		case 0:
+			case 0:
 			left.setPixelColor(i, 55, 128, 255);
 			right.setPixelColor(i, 55, 128, 255);
 			break;
-		case 1:
+			case 1:
 			left.setPixelColor(i, 255, 0, 0);
 			right.setPixelColor(i, 255, 0, 0);
 			break;
-		case 2:
+			case 2:
 			left.setPixelColor(i,255,0,95);
 			right.setPixelColor(i,255,0,95);
 			break;
-		case 3:
+			case 3:
 			left.setPixelColor(i,255,128,0);
 			right.setPixelColor(i,255,128,0);
 			break;
-		default:
-		#ifdef DEBUG
-		Serial.println("bad teamID parsed");
-		#endif
-		break;
+			default:
+			#ifdef DEBUG
+			Serial.println("bad teamID parsed");
+			#endif
+			break;
 		}
 	}
 	left.show();
@@ -601,7 +601,7 @@ bool Arduino::update(){
 			else{
 				currentPew--;
 			}
-				
+			
 			break;
 		}
 	}
@@ -740,8 +740,124 @@ void Suit::setUpPacket(){
 	}
 }
 
+void Suit::waitForSetup(IRrecv * showMe){
+	bool raw[61];
+	bool check=false;
+	decode_results resulters;
+	while(!check){
+		if(showMe->decode(&resulters)){
+			int counter2=0;
+			int i=0;
+			while((resulters.rawbuf[i]<40||resulters.rawbuf[i]>60)&&i<resulters.rawlen){
+				i++;
+			}
+			for(; i<resulters.rawlen&&counter2<61; i+=2){
+				switch(decodePulse(resulters.rawbuf[i])){
+					case 0:
+					raw[counter2]=false;
+					counter2++;
+					break;
+					case 1:
+					raw[counter2] = true;
+					counter2++;
+					break;
+					default:
+					break;
+				}
+			}
+			//validate checksum
+			if(counter2 > 55){
+				bool boolCheck[8];
+				myByte checksum;
+				unsigned int total=0;
+				for(int o=52; o<61; o++){
+					boolCheck[o-52]=raw[o];
+				}
+				checksum=boolToInt(boolCheck);
+				for(int o=0; o<52; o++){
+					if(raw[o]){
+						total++;
+					}
+				}
+				if(checksum==total){
+					check=true;
+				}
+				#ifdef DEBUG
+				else{
+					Serial.println("Checksums do not match");
+				}
+				#endif
+			}
+			#ifdef DEBUG
+			else{
+				Serial.println("Non-setup Packet recieved");
+			}
+			#endif
+			showMe->enableIRIn();
+			showMe->resume();
+		}
+	}
+	//transfer raw to values
+	{
+		myByte team;
+		myByte player;
+		bool temp[8];
+		int pointer=0;
+		for(int i=0; i<2; i++){
+			temp[i]=raw[pointer];
+			pointer++;
+		}
+		team=boolToInt(temp);
+		bool temp2[8];
+		for(int i=0; i<7; i++){
+			temp2[i] = raw[pointer];
+			pointer++;
+		}
+		player=boolToInt(temp2);
+		
+		setup(team, player, showMe);
+		
+		bool temp3[8];
+		for(int i=0; i<8; i++){
+			temp3[i] = raw[pointer];
+			pointer++;
+		}
+		clipSize=boolToInt(temp3);
+		bool temp4[8];
+		for(int i=0; i<8; i++){
+			temp4[i] = raw[pointer];
+			pointer++;
+		}
+		clipNum=boolToInt(temp4);
+		bool temp5[8];
+		for(int i=0; i<8; i++){
+			temp5[i] = raw[pointer];
+			pointer++;
+		}
+		damage=boolToInt(temp5);
+		bool temp6[8];
+		for(int i=0; i<8; i++){
+			temp6[i] = raw[pointer];
+			pointer++;
+		}
+		startHealth=boolToInt(temp6);
+		bool temp7[8];
+		for(int i=0; i<8; i++){
+			temp7[i] = raw[pointer];
+			pointer++;
+		}
+		armor=boolToInt(temp7);
+		bool temp8[8];
+		for(int i=0; i<4; i++){
+			temp8[i] = raw[pointer];
+			pointer++;
+		}
+		reload=boolToInt(temp8);
+	}
+	
+}
 
-bool Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
+void Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	//set all values to defaults except for the modifiers
 	//first set modifiers
 	
@@ -794,7 +910,6 @@ bool Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	if(showMe!=NULL){
 		recv = showMe;
 	}
-	return true;
 	
 }
 
@@ -853,7 +968,7 @@ parsedPacket Suit::readPacket(packet packetYay){
 		Serial.println(boolToInt(packetYay.data1));
 		Serial.println(boolToInt(packetYay.data2));
 		#endif
-		int amountOrCommand = testing2; 
+		int amountOrCommand = testing2;
 		switch(testing1){
 			case 128:
 			superYay.whatToDo = cAddHealth;
@@ -1018,7 +1133,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 			stat.addValue(sDeath,1);
 			gunCommand(gStop,0);
 			display.playLights(pLightsDead);
-			while(display.update()){}
+		while(display.update()){}
 			display.playIdle();
 			display.changeValues(0,0,0);
 			display.update(); //no health left!
@@ -1041,7 +1156,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 				gunCommand(gFullAmmo,0);
 				display.setup(milesHealth(startHealth), clipSize, armor, teamID);
 				display.playLights(pLightsGameOn);
-				while(display.update()){}
+			while(display.update()){}
 				#ifdef DEBUG
 				Serial.println("Game started!");
 				#endif
@@ -1187,7 +1302,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				tmpTime=millis();
 			}
 			if(currentClip>0&&!isDead&&currentDelay<=0){
-				if(clipSize!=999){
+				if(clipSize!=0xFF){
 					currentClip--;
 				}
 				delayMicroseconds(100);
@@ -1228,7 +1343,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				display.changeValues(currentHealth,currentAmmo,currentArmor);
 			}
 			
-			if(clipNum!=999){ //check for unlimited
+			if(clipNum!=0xCA){ //check for unlimited
 				currentAmmo--;
 			}
 			if(currentAmmo > 0&&!isDead){
@@ -1295,7 +1410,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 bool Suit::checkStatus() { //this function will return is the user is dead, but will also check to see if any packets are ready for processing, and if so, proccess them and take apropriete action
 	decode_results results;
 	if(recv->decode(&results)){
-		while(display.update()){}
+	while(display.update()){}
 		packet outPacket;
 		int counter=15;
 		int i=0;
@@ -1391,7 +1506,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	}
 	if(currentHealth<1 && !isDead){
 		display.playLights(pLightsDead);
-		while(display.update()){}
+	while(display.update()){}
 		display.playIdle();
 		delay(255);
 		stat.addValue(sDeath,1);
@@ -1417,17 +1532,17 @@ void Stats::reset(){
 int Stats::calculate(statCommand command){
 	switch(command){
 		case sShot:
-			return shotCount;
-			break;
+		return shotCount;
+		break;
 		case sDeath:
-			return deathCount;
-			break;
+		return deathCount;
+		break;
 		case sReload:
-			return reloadCount;
-			break;
+		return reloadCount;
+		break;
 		default:
-			return 0;
-			break;
+		return 0;
+		break;
 	}
 }
 
@@ -1440,18 +1555,18 @@ void Stats::returnHits(int * ray){
 void Stats::addValue(statCommand command, int input){
 	switch(command){
 		case sShot:
-			shotCount+=input;
-			break;
+		shotCount+=input;
+		break;
 		case sDeath:
-			deathCount+=input;	
-			break;
+		deathCount+=input;
+		break;
 		case sReload:
-			reloadCount+=input;
-			break;
+		reloadCount+=input;
+		break;
 		case sHit:
-			hitCount[input]++;
-			break;
+		hitCount[input]++;
+		break;
 		default:
-			break;
+		break;
 	}
 }

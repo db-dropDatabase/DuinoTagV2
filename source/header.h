@@ -74,6 +74,7 @@ int milesRPM(myByte rpm);
 int milesDamage(myByte damageIn);
 bool initPin(int pinNum);
 int decodePulse(int pulseLength);
+int boolToInt(bool input[8]);
 void intToBool(unsigned int input, unsigned int start, unsigned int len, char * ray);
 /*--MARIMOLE-DEF_END--*/
 
@@ -220,7 +221,7 @@ enum SuitCommmands{  //also includes message packet commands
 		myByte hitLEDTimeout; //seconds
 		myByte startHealth; //value reference in code.cpp
 		myByte respawnTime; //in tens of seconds
-		int armor; //does not conform to protocol
+		int armor; 
 		//bytes below are all part of a gamsettings thing, so I split them up, 0x00 is false and 0x01 is true
 		bool friendlyFire;
 		bool zombieMode;
@@ -242,10 +243,11 @@ enum SuitCommmands{  //also includes message packet commands
 		unsigned int numRespawns; //if respawn limit is set
 		unsigned int respawnTimeLeft;
 		bool isDead;
-		bool setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe); //sets everything to defaults for a quick game, except for shown varibles
+		void setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe); //sets everything to defaults for a quick game, except for shown varibles
 		//will add score and cloning packets later
 		bool action(packet packetYay); //put in packet, out goes lasers!
 		void sCommand(SuitCommmands command, int amount);
+		void waitForSetup(IRrecv * showMe); //damn you FTC
 		
 		Stats stat;
 		
@@ -253,8 +255,8 @@ enum SuitCommmands{  //also includes message packet commands
 		//gun stuff
 		bool overheat;  //if infinite clips, after awhile the gun will stop shooting
 		myByte damage; //function above converts int to damage
-		int clipSize; //999 for unlimited, does not conform to protocol
-		myByte clipNum; //999 for unlimited, does not conform to protocol
+		int clipSize; //0xFF for unlimited
+		myByte clipNum; //0xCA for unlimited
 		myByte fireType;  //0x00 semi auto, 0x01 burst, 0x02 full auto
 		myByte burstRounds; //num of rounds in burst mode
 		myByte rpm; // value reference in code.cpp
