@@ -208,7 +208,7 @@ enum SuitCommmands{  //also includes message packet commands
 		void addValue(statCommand command, int input);
 		void reset();
 		private:
-		unsigned int hitCount[127]; //I got hit x times by x!
+		uint_least8_t hitCount[127]; //I got hit x times by x!
 		unsigned int deathCount;
 		unsigned int shotCount;
 		unsigned int reloadCount;
@@ -220,7 +220,7 @@ enum SuitCommmands{  //also includes message packet commands
 		myByte teamID;
 		myByte hitLEDTimeout; //seconds
 		myByte startHealth; //value reference in code.cpp
-		myByte respawnTime; //in tens of seconds
+		myByte respawnTime; //in tens of seconds, not used
 		int armor; 
 		//bytes below are all part of a gamsettings thing, so I split them up, 0x00 is false and 0x01 is true
 		bool friendlyFire;

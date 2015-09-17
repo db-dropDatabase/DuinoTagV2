@@ -751,7 +751,7 @@ void Suit::waitForSetup(IRrecv * showMe){
 			while((resulters.rawbuf[i]<40||resulters.rawbuf[i]>60)&&i<resulters.rawlen){
 				i++;
 			}
-			for(; i<resulters.rawlen&&counter2<61; i+=2){
+			for(; i<resulters.rawlen&&counter2<62; i+=2){
 				switch(decodePulse(resulters.rawbuf[i])){
 					case 0:
 					raw[counter2]=false;
@@ -766,15 +766,17 @@ void Suit::waitForSetup(IRrecv * showMe){
 				}
 			}
 			//validate checksum
-			if(counter2 > 55){
+			if(counter2 > 54){
 				bool boolCheck[8];
 				myByte checksum;
 				unsigned int total=0;
-				for(int o=52; o<61; o++){
-					boolCheck[o-52]=raw[o];
+				unsigned int u=0;
+				for(int o=60; o>52; o--){
+					boolCheck[u]=raw[o];
+					u++;
 				}
 				checksum=boolToInt(boolCheck);
-				for(int o=0; o<52; o++){
+				for(int o=0; o<53; o++){
 					if(raw[o]){
 						total++;
 					}
@@ -785,12 +787,20 @@ void Suit::waitForSetup(IRrecv * showMe){
 				#ifdef DEBUG
 				else{
 					Serial.println("Checksums do not match");
+					Serial.println(total);
+					Serial.print(checksum);
+					Serial.println("");
+					for(int i=0; i<61; i++){
+						Serial.print(raw[i]);
+					}
+					Serial.println("");
 				}
 				#endif
 			}
 			#ifdef DEBUG
 			else{
 				Serial.println("Non-setup Packet recieved");
+				Serial.println(counter2);
 			}
 			#endif
 			showMe->enableIRIn();
@@ -801,15 +811,15 @@ void Suit::waitForSetup(IRrecv * showMe){
 	{
 		myByte team;
 		myByte player;
-		bool temp[8];
+		bool temp[8] = {};
 		int pointer=0;
-		for(int i=0; i<2; i++){
+		for(int i=1; i>=0; i--){
 			temp[i]=raw[pointer];
 			pointer++;
 		}
 		team=boolToInt(temp);
-		bool temp2[8];
-		for(int i=0; i<7; i++){
+		bool temp2[8] = {};
+		for(int i=6; i>=0; i--){
 			temp2[i] = raw[pointer];
 			pointer++;
 		}
@@ -818,41 +828,60 @@ void Suit::waitForSetup(IRrecv * showMe){
 		setup(team, player, showMe);
 		
 		bool temp3[8];
-		for(int i=0; i<8; i++){
+		for(int i=7; i>=0; i--){
 			temp3[i] = raw[pointer];
 			pointer++;
 		}
 		clipSize=boolToInt(temp3);
-		bool temp4[8];
-		for(int i=0; i<8; i++){
-			temp4[i] = raw[pointer];
+		for(int i=7; i>=0; i--){
+			temp3[i] = raw[pointer];
 			pointer++;
 		}
-		clipNum=boolToInt(temp4);
-		bool temp5[8];
-		for(int i=0; i<8; i++){
-			temp5[i] = raw[pointer];
+		clipNum=boolToInt(temp3);
+		for(int i=7; i>=0; i--){
+			temp3[i] = raw[pointer];
 			pointer++;
 		}
-		damage=boolToInt(temp5);
-		bool temp6[8];
-		for(int i=0; i<8; i++){
-			temp6[i] = raw[pointer];
+		damage=boolToInt(temp3);
+		for(int i=7; i>=0; i--){
+			temp3[i] = raw[pointer];
 			pointer++;
 		}
-		startHealth=boolToInt(temp6);
-		bool temp7[8];
-		for(int i=0; i<8; i++){
-			temp7[i] = raw[pointer];
+		startHealth=boolToInt(temp3);
+		for(int i=7; i>=0; i--){
+			temp3[i] = raw[pointer];
 			pointer++;
 		}
-		armor=boolToInt(temp7);
-		bool temp8[8];
-		for(int i=0; i<4; i++){
+		int randomInt=pointer;
+		armor=boolToInt(temp3);
+		bool temp8[8] = {};
+		for(int i=3; i>=0; i--){
 			temp8[i] = raw[pointer];
 			pointer++;
 		}
 		reload=boolToInt(temp8);
+		
+		#ifdef VERBOSE_DEBUG
+		
+		Serial.print("Armor bits: ");
+		for(int i=randomInt-8; i<randomInt; i++){
+			Serial.print(raw[i]);
+		}
+		
+		Serial.println("MASSIVE DEBUG");
+		Serial.print("team:");
+		Serial.println(teamID);
+		Serial.print("Player: ");
+		Serial.println(playerID);
+		Serial.print("Clip: ");
+		Serial.println(clipSize);
+		Serial.print("ClipNum: ");
+		Serial.println(clipNum);
+		Serial.print("Armor: ");
+		Serial.println(armor);
+		Serial.println("");
+		
+		#endif
 	}
 	
 }
