@@ -35,6 +35,7 @@ void setup(){
 	#endif
 	digitalWrite(13, HIGH);
 	delay(5000);
+	//laser.sCommand(cStartGame,0);
 	digitalWrite(13, LOW);
 }
 

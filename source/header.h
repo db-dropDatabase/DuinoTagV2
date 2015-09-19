@@ -63,6 +63,7 @@ void setup();
 //bool Arduino::checkTrigger();
 //bool Arduino::playLights(arduinoLights command);
 class Arduino;
+class Bitshift;
 class Suit;
 class Stats;
 class Lasergun;
@@ -77,10 +78,19 @@ int decodePulse(int pulseLength);
 int boolToInt(bool input[8]);
 void intToBool(unsigned int input, unsigned int start, unsigned int len, char * ray);
 /*--MARIMOLE-DEF_END--*/
+//sorry, but it has to be done...
+class Bitshift{
+		public:
+		unsigned int store;
+		bool& operator[] (unsigned int x);
+		Bitshift& operator= (const unsigned int &x);
+		void flip(unsigned int place, bool value);
+};
+// :(
 
 typedef struct {
-	bool data1[8];//1 bit for packet type, 7 bits for playerID 
-	bool data2[8];  //6 or 8 bits for team and damage or message data
+	Bitshift data1;//1 bit for packet type, 7 bits for playerID 
+	Bitshift data2;  //6 or 8 bits for team and damage or message data
 }packet;
 
 enum arduinoLights {

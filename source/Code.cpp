@@ -14,7 +14,7 @@ using namespace std;
 
 //miles library
 
-int milesDamage(int damageIn){
+int milesDamage(myByte damageIn){
 	//damage table shown below:
 	/*Value Damage dealt
 	0x00 1
@@ -613,6 +613,30 @@ bool Arduino::update(){
 	}
 }
 
+Bitshift& Bitshift::operator= (const unsigned int &x){
+	store=x;
+	return *this;
+}
+
+bool& Bitshift::operator[] (unsigned int x){
+	bool ret = (store & (1<<x));
+	return ret;
+}
+
+void Bitshift::flip(unsigned int place, bool value){
+	#ifdef DEBUG
+	if(value>7||value<0){
+		Serial.println("Value out of bounds!");
+	}
+	#endif
+	if(value){
+		store = store | (1<<place);
+	}
+	else{
+		store = store & ~(1<<place);
+	}
+}
+
 //lasercode
 //header
 
@@ -677,6 +701,8 @@ lasergun will shoot and control ammo, reload, etc.
 
 //for now, I will assume that the packet receiving is handled by something else
 //let's write some functions
+
+
 void intToBool(unsigned int input, unsigned int start, unsigned int len, bool * ray){
 	unsigned int mod=2;
 	start += len-1;
@@ -692,18 +718,6 @@ void intToBool(unsigned int input, unsigned int start, unsigned int len, bool * 
 		len--;
 		mod*=2;
 	}
-}
-
-int boolToInt(bool input[8]){
-	int out=0;
-	int adder=128;
-	for(int i=7; i>=0; i--){
-		if(input[i] == 1){
-			out += adder;
-		}
-		adder/=2;
-	}
-	return out;
 }
 
 void Suit::setUpPacket(){
@@ -767,28 +781,27 @@ void Suit::waitForSetup(IRrecv * showMe){
 			}
 			//validate checksum
 			if(counter2 > 54){
-				bool boolCheck[8];
-				myByte checksum;
+				Bitshift boolCheck;
+				boolCheck=0;
 				unsigned int total=0;
 				unsigned int u=0;
 				for(int o=60; o>52; o--){
-					boolCheck[u]=raw[o];
+					boolCheck.flip(u,raw[o]);
 					u++;
 				}
-				checksum=boolToInt(boolCheck);
 				for(int o=0; o<53; o++){
 					if(raw[o]){
 						total++;
 					}
 				}
-				if(checksum==total){
+				if(boolCheck.store==total){
 					check=true;
 				}
 				#ifdef DEBUG
 				else{
 					Serial.println("Checksums do not match");
 					Serial.println(total);
-					Serial.print(checksum);
+					Serial.print(boolCheck.store);
 					Serial.println("");
 					for(int i=0; i<61; i++){
 						Serial.print(raw[i]);
@@ -809,57 +822,57 @@ void Suit::waitForSetup(IRrecv * showMe){
 	}
 	//transfer raw to values
 	{
-		myByte team;
-		myByte player;
-		bool temp[8] = {};
+		Bitshift temp;
+		temp=0;
 		int pointer=0;
 		for(int i=1; i>=0; i--){
-			temp[i]=raw[pointer];
+			temp.flip(i, raw[pointer]);
 			pointer++;
 		}
-		team=boolToInt(temp);
-		bool temp2[8] = {};
+		Bitshift temp2;
+		temp2=0;
 		for(int i=6; i>=0; i--){
-			temp2[i] = raw[pointer];
+			temp2.flip(i, raw[pointer]);
 			pointer++;
 		}
-		player=boolToInt(temp2);
 		
-		setup(team, player, showMe);
+		setup(temp.store, temp2.store, showMe);
 		
-		bool temp3[8];
+		Bitshift temp3;
+		temp3=0;
 		for(int i=7; i>=0; i--){
-			temp3[i] = raw[pointer];
+			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
-		clipSize=boolToInt(temp3);
+		clipSize=temp3.store;
 		for(int i=7; i>=0; i--){
-			temp3[i] = raw[pointer];
+			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
-		clipNum=boolToInt(temp3);
+		clipNum=temp3.store;
 		for(int i=7; i>=0; i--){
-			temp3[i] = raw[pointer];
+			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
-		damage=boolToInt(temp3);
+		damage=temp3.store;
 		for(int i=7; i>=0; i--){
-			temp3[i] = raw[pointer];
+			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
-		startHealth=boolToInt(temp3);
+		startHealth=temp3.store;
 		for(int i=7; i>=0; i--){
-			temp3[i] = raw[pointer];
+			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
 		int randomInt=pointer;
-		armor=boolToInt(temp3);
-		bool temp8[8] = {};
+		armor=temp3.store;
+		Bitshift temp8;
+		temp8=0;
 		for(int i=3; i>=0; i--){
-			temp8[i] = raw[pointer];
+			temp8.flip(i, raw[pointer]);
 			pointer++;
 		}
-		reload=boolToInt(temp8);
+		reload=temp8.store;
 		
 		#ifdef VERBOSE_DEBUG
 		
@@ -943,7 +956,7 @@ void Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 }
 
 parsedPacket Suit::readPacket(packet packetYay){
-	#ifdef VERBOSE_DEBUG
+	#ifdef DEBUG
 	Serial.println("The packet is as follows: ");
 	for(int i=7; i>=0; i--){
 		Serial.print(packetYay.data1[i]);
@@ -968,20 +981,20 @@ parsedPacket Suit::readPacket(packet packetYay){
 			Serial.println("teamID is the same as shooter teamid");
 			#endif
 			if(friendlyFire){
-				packetYay.data2[6] = 0;
-				packetYay.data2[7] = 0; //wipe the teamID so I can grab the damage
-				superYay.amount= milesDamage((boolToInt(packetYay.data2)/4)); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
+				packetYay.data2.flip(6,0);
+				packetYay.data2.flip(7,0); //wipe the teamID so I can grab the damage
+				superYay.amount= milesDamage(packetYay.data2.store/4); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
 				superYay.whatToDo=cShot;
-				stat.addValue(sHit, boolToInt(packetYay.data1)-128);
+				stat.addValue(sHit, packetYay.data1.store-128);
 			}
 			else{
 				superYay.whatToDo=cNull;
 			}
 		}
 		else{
-			packetYay.data2[6] = 0;
-			packetYay.data2[7] = 0;
-			superYay.amount= milesDamage((boolToInt(packetYay.data2)/4)); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
+			packetYay.data2.flip(6,0);
+			packetYay.data2.flip(7,0);
+			superYay.amount= milesDamage(packetYay.data2.store/4); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
 			superYay.whatToDo=cShot;
 		}
 		
@@ -991,11 +1004,11 @@ parsedPacket Suit::readPacket(packet packetYay){
 		#ifdef DEBUG
 		Serial.println("Mesasage packet!");
 		#endif
-		int testing1 = boolToInt(packetYay.data1);
-		int testing2 = boolToInt(packetYay.data2);
+		unsigned int testing1 = packetYay.data1.store;
+		unsigned int testing2 = packetYay.data2.store;
 		#ifdef DEBUG
-		Serial.println(boolToInt(packetYay.data1));
-		Serial.println(boolToInt(packetYay.data2));
+		Serial.println(packetYay.data1.store);
+		Serial.println(packetYay.data2.store);
 		#endif
 		int amountOrCommand = testing2;
 		switch(testing1){
@@ -1441,6 +1454,8 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	if(recv->decode(&results)){
 	while(display.update()){}
 		packet outPacket;
+		outPacket.data1=0;
+		outPacket.data2=0;
 		int counter=15;
 		int i=0;
 		while((results.rawbuf[i]<40||results.rawbuf[i]>60)&&i<results.rawlen){
@@ -1458,21 +1473,21 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 			switch(decodePulse(results.rawbuf[i])){
 				case 0:
 				if(counter<8 && counter >= 0){
-					outPacket.data2[counter] = false;
+					outPacket.data2.flip(counter,0);
 					counter--;
 				}
 				else if(counter<16){
-					outPacket.data1[counter-8] = false;
+					outPacket.data1.flip(counter-8,0);
 					counter--;
 				}
 				break;
 				case 1:
 				if(counter<8 && counter >= 0){
-					outPacket.data2[counter] = true;
+					outPacket.data2.flip(counter,1);
 					counter--;
 				}
 				else if(counter<16){
-					outPacket.data1[counter-8] = true;
+					outPacket.data1.flip(counter-8,1);
 					counter--;
 				}
 				break;
