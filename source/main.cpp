@@ -23,9 +23,7 @@ void setup(){
 	//laser.waitForSetup(&recver);
 	//pinMode(triggerPin, INPUT_PULLUP);
 	pinMode(13,OUTPUT); //used as game indicator during setup
-	laser.setup(0x02,0x10,0x03,&recver);
-	laser.currentProfile.clipSize=25; //this is really ugly, but you shouldn't even have to do this
-	laser.clipNum=25;
+	laser.setup(0x02,0x10,&recver);
 	//laser.startHealth=0x24;
 	#ifdef DEBUG
 	Serial.println("Suit setup done");
@@ -41,10 +39,9 @@ void setup(){
 
 
 void loop(){
-	if(millis()-lastTime > 100){
+	if(millis()-lastTime > 500){
 		if(!laser.gunCommand(gShoot,0)){
 			laser.gunCommand(gReload,0);
-			laser.switchGun(pistol);
 		}
 		lastTime=millis();
 	}

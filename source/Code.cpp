@@ -613,6 +613,10 @@ bool Arduino::update(){
 	}
 }
 
+Bitshift::Bitshift(void){
+	store=0;
+}
+
 Bitshift& Bitshift::operator= (const unsigned int &x){
 	store=x;
 	return *this;
@@ -823,28 +827,24 @@ void Suit::waitForSetup(IRrecv * showMe){
 	//transfer raw to values
 	{
 		Bitshift temp;
-		temp=0;
 		int pointer=0;
 		for(int i=1; i>=0; i--){
 			temp.flip(i, raw[pointer]);
 			pointer++;
 		}
 		Bitshift temp2;
-		temp2=0;
 		for(int i=6; i>=0; i--){
 			temp2.flip(i, raw[pointer]);
 			pointer++;
 		}
 		
 		Bitshift temp3;
-		temp3=0;
 		
 		for(int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
-		
-		setup(temp.store, temp2.store, temp3.store, showMe);
+		gunValues.damage=temp3.store;
 		
 		for(int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
@@ -855,7 +855,7 @@ void Suit::waitForSetup(IRrecv * showMe){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
-		clipNum=temp3.store;
+		gunValues.clipNum=temp3.store;
 		for(int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
@@ -873,8 +873,9 @@ void Suit::waitForSetup(IRrecv * showMe){
 			temp8.flip(i, raw[pointer]);
 			pointer++;
 		}
-		currentProfile.reload=temp8.store;
+		gunValues.reload=temp8.store;
 		
+		setup(temp.store, temp2.store, showMe);
 		#ifdef VERBOSE_DEBUG
 		
 		Serial.print("Armor bits: ");
@@ -900,13 +901,26 @@ void Suit::waitForSetup(IRrecv * showMe){
 	
 }
 
-void Suit::setup(myByte iTeamID, myByte iPlayerID, myByte iDamage, IRrecv * showMe){
+void Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	//set all values to defaults except for the modifiers
 	//first set modifiers
-	
 	teamID = iTeamID;
 	playerID = iPlayerID;
 	//now set the defaults!
+	currentProfile=gunValues;
+	display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
+	display.playIdle();
+	setUpPacket();
+	stat.reset();
+	//IR
+	if(showMe!=NULL){
+		recv = showMe;
+	}
+	
+}
+
+Suit::Suit(void){
+	//YAY
 	hitLEDTimeout = 0x04;
 	startHealth = 0x24; //100
 	respawnTime = 0x03; //30 secs
@@ -926,15 +940,13 @@ void Suit::setup(myByte iTeamID, myByte iPlayerID, myByte iDamage, IRrecv * show
 	isDead=true;
 	currentHealth=0;
 	currentArmor=0;
-	display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
-	display.playIdle();
 	//lasergun setup
 	
-	//clipNum = 5;
-	//clipSize = 5; //This Doesnt work. I don't know why.
+	gunValues.clipNum = 0xCA;
+	gunValues.clipSize = 50; 
 	//defaults
 	overheat=0;
-	gunValues.damage=iDamage; 
+	gunValues.damage=0x03;
 	fireType=0x02; //full auto;
 	burstRounds=0x00;
 	gunValues.rpm=0x00; //250 cyclic rpm
@@ -945,16 +957,11 @@ void Suit::setup(myByte iTeamID, myByte iPlayerID, myByte iDamage, IRrecv * show
 	ammoReset=1;
 	currentDelay=0;
 	tmpTime=0;
-	currentAmmo=0;
-	rpmDelay=1000/(milesRPM(currentProfile.rpm)/60);
-	currentProfile=gunValues;
-	setUpPacket();
-	stat.reset();
-	//IR
-	if(showMe!=NULL){
-		recv = showMe;
-	}
-	
+	currentAmmo=0xCA;
+	rpmDelay=1000/(milesRPM(gunValues.rpm)/60);
+	currentProfile = gunValues;
+	currentClip = gunValues.clipSize;
+	currentAmmo = gunValues.clipNum;
 }
 
 parsedPacket Suit::readPacket(packet packetYay){
@@ -1209,7 +1216,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cDefaults:
 		{
-			setup(teamID, playerID, currentProfile.damage, NULL);
+			setup(teamID, playerID, NULL);
 			display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
 			display.playLights(pLightsGameOn);
 		}
@@ -1387,7 +1394,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				display.changeValues(currentHealth,currentAmmo,currentArmor);
 			}
 			
-			if(clipNum!=0xCA){ //check for unlimited
+			if(currentProfile.clipNum!=0xCA){ //check for unlimited
 				currentAmmo--;
 			}
 			if(currentAmmo > 0&&!isDead){
@@ -1408,7 +1415,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 						Serial.println(currentReload);
 						#endif
 					}
-					reloadStatus = ((double)(currentReload/10.0) * (100/currentProfile.reload))/(100/currentProfile.clipSize);
+					reloadStatus = currentProfile.clipSize-((double)(currentReload/10.0) * (100/currentProfile.reload))/(100/currentProfile.clipSize);
 					display.changeValues(currentHealth,reloadStatus,currentArmor);
 					checkStatus();
 				}
@@ -1436,7 +1443,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 		case gFullAmmo:
 		{
 			currentClip=currentProfile.clipSize;
-			currentAmmo=clipNum;
+			currentAmmo=currentProfile.clipNum;
 			return true;
 		}
 		break;
@@ -1452,6 +1459,13 @@ bool Suit::gunCommand(GunCommands command, int amount){
 
 void Suit::switchGun(gunProfile newGun){
 	currentProfile=newGun;
+	currentClip = currentProfile.clipSize;
+	#ifdef DEBUG
+	Serial.println("Changing weapons!");
+	Serial.println(currentClip);
+	Serial.println(currentAmmo);
+	#endif
+	display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
 	rpmDelay=1000/(milesRPM(currentProfile.rpm)/60);
 	setUpPacket();
 }
@@ -1571,6 +1585,15 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 }
 
 //Stats machine
+Stats::Stats(){
+	for(int i=0; i<127; i++){
+		hitCount[i]=0;
+	}
+	deathCount=0;
+	shotCount=0;
+	reloadCount=0;
+}
+
 void Stats::reset(){
 	for(int i=0; i<127; i++){
 		hitCount[i]=0;

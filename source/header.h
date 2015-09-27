@@ -60,6 +60,7 @@ class Bitshift{
 		bool& operator[] (unsigned int x);
 		Bitshift& operator= (const unsigned int &x);
 		void flip(unsigned int place, bool value);
+		Bitshift();
 };
 // :(
 
@@ -142,22 +143,23 @@ enum SuitCommmands{  //also includes message packet commands
 		sDeath
 	};
 	
-	typedef struct {
+	struct parsedPacket{
 		SuitCommmands whatToDo;
 		unsigned int amount; //for add ammo or health
-	}parsedPacket;
+	};
 	
 	struct gunProfile{
 		myByte damage;
 		myByte rpm;
 		myByte reload;
 		myByte clipSize;
+		myByte clipNum;
 	};
 	
-	const gunProfile machineGun = {3, 7, 4, 50}; //conforms to the f ing milestag protocol
-	const gunProfile pistol = {5, 0, 2, 8}; //technicly should be semi-auto, but can't add that here
-	const gunProfile sniper = {12, 0, 5, 4};
-	const gunProfile shotgun = {6, 0, 4, 8};
+	const gunProfile machineGun = {3, 7, 4, 50, 0xCA}; //conforms to the f ing milestag protocol
+	const gunProfile pistol = {5, 0, 2, 8, 0xCA}; //technicly should be semi-auto, but can't add that here
+	const gunProfile sniper = {12, 0, 5, 4, 0xCA};
+	const gunProfile shotgun = {6, 0, 4, 8, 0xCA};
 	
 	class Arduino{ //for playing sounds and lights
 		public:
@@ -202,6 +204,7 @@ enum SuitCommmands{  //also includes message packet commands
 		void returnHits(int * ray);
 		void addValue(statCommand command, int input);
 		void reset();
+		Stats();
 		private:
 		uint_least8_t hitCount[127]; //I got hit x times by x!
 		unsigned int deathCount;
@@ -238,7 +241,8 @@ enum SuitCommmands{  //also includes message packet commands
 		unsigned int numRespawns; //if respawn limit is set
 		unsigned int respawnTimeLeft;
 		bool isDead;
-		void setup(myByte iTeamID, myByte iPlayerID, myByte iDamage, IRrecv * showMe); //sets everything to defaults for a quick game, except for shown varibles
+		Suit();
+		void setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe); //sets everything to defaults for a quick game, except for shown varibles
 		//will add score and cloning packets later
 		bool action(packet packetYay); //put in packet, out goes lasers!
 		void sCommand(SuitCommmands command, int amount);
@@ -249,8 +253,6 @@ enum SuitCommmands{  //also includes message packet commands
 		//test merging of classes
 		//gun stuff
 		bool overheat;  //if infinite clips, after awhile the gun will stop shooting
-		myByte damage; //function above converts int to damage
-		myByte clipNum; //0xCA for unlimited
 		myByte fireType;  //0x00 semi auto, 0x01 burst, 0x02 full auto
 		myByte burstRounds; //num of rounds in burst mode
 		bool IRPower; //0x00 low, 0x01 high :/
@@ -261,8 +263,6 @@ enum SuitCommmands{  //also includes message packet commands
 		//bytes below are in the part 2 of the gamesettings thing
 		bool ammoReset;  //restock ammo on spawn
 		//functions or variables not included in table
-		unsigned int currentAmmo;
-		unsigned int currentClip;
 		unsigned int currentReload;
 		unsigned int shotPacket[30]; //for IRsend library, initilized in setuppacket
 		bool gunCommand(GunCommands, int amount);
@@ -272,12 +272,13 @@ enum SuitCommmands{  //also includes message packet commands
 		bool checkStatus();
 		unsigned int rpmDelay; //initialized in setup
 		gunProfile currentProfile;
+		gunProfile gunValues;
+		int currentClip;
+		int currentAmmo;
 		private:
 		void setUpPacket(); //called in setup
 		long int currentDelay;
 		unsigned long int tmpTime;
-		int lastDamage;
-		gunProfile gunValues;
 		
 		parsedPacket readPacket(packet packetYay);
 		IRsend irsend;
