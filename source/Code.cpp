@@ -237,7 +237,6 @@ bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	left.show();
 	right.show();
 	neopix.show();
-	reset();
 	aMaxHealth=smaxHealth;
 	aMaxAmmo=smaxAmmo;
 	aMaxArmor=smaxArmor;
@@ -613,6 +612,10 @@ bool Arduino::update(){
 	}
 }
 
+Arduino::Arduino(void){
+	reset();
+}
+
 Bitshift::Bitshift(void){
 	store=0;
 }
@@ -911,7 +914,6 @@ void Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
 	display.playIdle();
 	setUpPacket();
-	stat.reset();
 	//IR
 	if(showMe!=NULL){
 		recv = showMe;
@@ -1586,12 +1588,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 
 //Stats machine
 Stats::Stats(){
-	for(int i=0; i<127; i++){
-		hitCount[i]=0;
-	}
-	deathCount=0;
-	shotCount=0;
-	reloadCount=0;
+	reset();
 }
 
 void Stats::reset(){

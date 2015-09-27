@@ -172,6 +172,7 @@ enum SuitCommmands{  //also includes message packet commands
 		void changeValues(double aHealth, double aAmmo, double aArmor);
 		void playPew(); //pew needs to behave differently than other sounds, so yeah
 		void playIdle();
+		Arduino();
 		private:
 		arduinoLights commandBuffer[5];
 		bool lightCommand(const lightControl steps[15]);
