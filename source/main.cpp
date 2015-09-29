@@ -39,7 +39,7 @@ void setup(){
 
 
 void loop(){
-	if(millis()-lastTime > 500){
+	if(millis()-lastTime > 80){
 		if(!laser.gunCommand(gShoot,0)){
 			laser.gunCommand(gReload,0);
 		}
@@ -48,4 +48,5 @@ void loop(){
 	if(laser.checkStatus()){
 		
 	}
+	laser.display.update();
 }

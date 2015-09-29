@@ -4,7 +4,7 @@
 #include "header.h"
 
 #ifndef DEBUG
-#define DEBUG
+//#define DEBUG
 #endif
 
 using namespace std;
@@ -237,6 +237,7 @@ bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	left.show();
 	right.show();
 	neopix.show();
+	reset();
 	aMaxHealth=smaxHealth;
 	aMaxAmmo=smaxAmmo;
 	aMaxArmor=smaxArmor;
@@ -580,7 +581,7 @@ bool Arduino::update(){
 			case 0:
 			//muzzleOn
 			digitalWrite(muzzlePin, HIGH);
-			currentPew=1200;
+			currentPew=1400;
 			break;
 			case 600:
 			//muzzle off
@@ -951,7 +952,7 @@ Suit::Suit(void){
 	gunValues.damage=0x03;
 	fireType=0x02; //full auto;
 	burstRounds=0x00;
-	gunValues.rpm=0x00; //250 cyclic rpm
+	gunValues.rpm=0x0a; 
 	gunValues.reload=4;
 	IRPower=0;
 	gunSettings=0x01; //muzzle flash on, no overheat
@@ -1365,6 +1366,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				#ifdef DEBUG
 				Serial.println("BANG");
 				Serial.println(rpmDelay);
+				Serial.println(currentProfile.rpm);
 				#endif
 				currentDelay=rpmDelay;
 				stat.addValue(sShot,1);
@@ -1475,7 +1477,6 @@ void Suit::switchGun(gunProfile newGun){
 bool Suit::checkStatus() { //this function will return is the user is dead, but will also check to see if any packets are ready for processing, and if so, proccess them and take apropriete action
 	decode_results results;
 	if(recv->decode(&results)){
-	while(display.update()){}
 		packet outPacket;
 		outPacket.data1=0;
 		outPacket.data2=0;
@@ -1573,7 +1574,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	}
 	if(currentHealth<1 && !isDead){
 		display.playLights(pLightsDead);
-	while(display.update()){}
+		while(display.update()){}
 		display.playIdle();
 		delay(255);
 		stat.addValue(sDeath,1);
@@ -1582,7 +1583,6 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	if(currentClip>0){ //reload function will handle it
 		display.changeValues(currentHealth,currentClip,currentArmor);
 	}
-	display.update();
 	return isDead;
 }
 
