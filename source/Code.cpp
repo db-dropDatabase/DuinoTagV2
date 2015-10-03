@@ -4,7 +4,7 @@
 #include "header.h"
 
 #ifndef DEBUG
-//#define DEBUG
+#define DEBUG
 #endif
 
 using namespace std;
@@ -353,10 +353,10 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 			pewOverride=true;
 			return false;
 		}
-		else if(soundDelay > 100){
+		else if(soundDelay > 200){
 			toneAC(soundDelay,10);
 			soundDelay-=1;
-			delayMicroseconds(50);
+			delayMicroseconds(10);
 			return false;
 		}
 		else{
@@ -1574,6 +1574,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	}
 	if(currentHealth<1 && !isDead){
 		display.playLights(pLightsDead);
+		display.changeValues(0,0,0);
 		while(display.update()){}
 		display.playIdle();
 		delay(255);
@@ -1583,6 +1584,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	if(currentClip>0){ //reload function will handle it
 		display.changeValues(currentHealth,currentClip,currentArmor);
 	}
+	display.update();
 	return isDead;
 }
 

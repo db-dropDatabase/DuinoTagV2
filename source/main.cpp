@@ -11,7 +11,7 @@ long int lastTime=0;
 
 void setup(){
 	#ifdef DEBUG
-	Serial.begin(9600);
+	Serial.begin(115200);
 	delay(200);
 	Serial.println("Booting up...");
 	#endif
@@ -39,14 +39,13 @@ void setup(){
 
 
 void loop(){
-	if(millis()-lastTime > 80){
+	if(millis()-lastTime > 200){
 		if(!laser.gunCommand(gShoot,0)){
 			laser.gunCommand(gReload,0);
 		}
 		lastTime=millis();
 	}
 	if(laser.checkStatus()){
-		
+		laser.sCommand(cRespawn,0);
 	}
-	laser.display.update();
 }
