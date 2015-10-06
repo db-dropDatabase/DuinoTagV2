@@ -10,6 +10,8 @@
 
 #include "Adafruit_NeoPixel.h"
 
+#include "FlexiTimer2.h"
+
 #define myByte unsigned int
 
 #define constDelay 1000
@@ -64,10 +66,10 @@ class Bitshift{
 };
 // :(
 
-typedef struct {
+struct packet{
 	Bitshift data1;//1 bit for packet type, 7 bits for playerID 
 	Bitshift data2;  //6 or 8 bits for team and damage or message data
-}packet;
+};
 
 enum arduinoLights {
 	pLightsHit,
@@ -102,7 +104,22 @@ const lightControl gameOn[15] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay
 const lightControl dead[15] = {hitOn,playDead,hitOff,over};
 const lightControl gameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
 	//is this cool or what?!
-	
+
+struct soundProp{
+	bool escalating; //playing sound up or down
+	unsigned int start;
+	unsigned int end;
+	unsigned int interval; //in micro seconds
+};
+
+//below are sound props. can be edited freely.
+//the sound is played by escalating or deescalating from start freq. to end freq. with a buzzer
+const soundProp pPew = {false, 1600, 400, 10}; //for ex. starts a 1600hz, goes down 1 each inturupt until 400hz
+const soundProp pHit = {false, 750, 200, 100};
+const soundProp pStart = {true, 50, 2000, 10};
+const soundProp pDead = {false, 1000, 10, 10};
+//yay!
+
 enum SuitCommmands{  //also includes message packet commands
 		cShot, //take damage
 		//message packet commands
@@ -194,9 +211,25 @@ enum SuitCommmands{  //also includes message packet commands
 		double aMaxArmor;
 		double armorDisp;
 		
-		Adafruit_NeoPixel neopix;
-		Adafruit_NeoPixel left;
+		Adafruit_NeoPixel neopix;  //lights handled by neopixel library, these are indicator
+		Adafruit_NeoPixel left;  //these are left side team
 		Adafruit_NeoPixel right;
+	};
+	
+	class Sounds{  //updating lights semi-consistintly works, but it doesn't for sound.  This class will handle it all in an ISR which will be called every 100us or so
+		//is will also be nested inside Arduino, but will be pretty much handled by Arduino
+		public:
+		
+		bool playSound(const soundProp sound);
+		void updateSound(void); //called by timer 3
+		void reset();
+		void pause();
+		Sounds(); //just calls setup and then reset
+		bool playingSound;
+		private:
+		volatile int currentFreq;
+		bool paused;
+		soundProp currentSound;
 	};
 	
 	class Stats{

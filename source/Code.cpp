@@ -1,6 +1,7 @@
 #include "IRremote.cpp"
 #include "toneAC.cpp"
 #include "Adafruit_NeoPixel.cpp"
+#include "FlexiTimer2.cpp"
 #include "header.h"
 
 #ifndef DEBUG
@@ -615,6 +616,60 @@ bool Arduino::update(){
 
 Arduino::Arduino(void){
 	reset();
+}
+
+void Sounds::reset(){
+	currentFreq=0;
+	currentSound=soundProp(); //should reset values?
+	paused=false;
+	playingSound=false;
+	FlexiTimer2::start();
+}
+
+Sounds::Sounds(){
+	reset();
+}
+//simple enough
+
+void Sounds::pause(){
+	if(!paused){
+		currentFreq=0;
+		currentSound= soundProp(); //should reset values?
+		playingSound=false;
+		FlexiTimer2::stop();
+	}
+	paused = !paused;
+}
+
+bool Sounds::playSound(const soundProp sound){
+	if(!paused){
+		currentSound=sound;
+		currentFreq=currentSound.start;
+		FlexiTimer2::set(1, (float)(currentSound.interval/1000000), updateSound);
+		if(playingSound){  //the return value tells if it overrid another sound
+			return true;
+		}
+		else{
+			playingSound=true;
+			return false;
+		}
+	}
+}
+
+void Sounds::updateSound(void){ //technicly an ISR
+	toneAC(currentFreq);
+	if(!currentSound.escalating){
+		currentFreq-=currentSound.interval;
+		if(currentFreq<=currentSound.end){
+			reset();
+		}
+	}
+	else{
+		currentFreq+=currentSound.interval;
+		if(currentFreq>=currentSound.end){
+			reset();
+		}
+	}
 }
 
 Bitshift::Bitshift(void){
