@@ -1,8 +1,7 @@
-#include "IRremote.cpp"
-#include "toneAC.cpp"
-#include "Adafruit_NeoPixel.cpp"
-#include "FlexiTimer2.cpp"
-#include "header.h"
+#ifndef DUINOTAGV2_CPP
+#define DUINOTAGV2_CPP
+
+#include <DuinoTagV2.h>
 
 #ifndef DEBUG
 #define DEBUG
@@ -1755,3 +1754,5 @@ void Stats::addValue(statCommand command, int input){
 		break;
 	}
 }
+
+#endif //guard

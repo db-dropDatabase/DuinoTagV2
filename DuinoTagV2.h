@@ -1,16 +1,15 @@
 //---------------------------------------------------------------------------
-#ifndef _MARIAMOLE_AUTOMATIC_CODE_H
-#define _MARIAMOLE_AUTOMATIC_CODE_H
+#ifndef DUINOTAGV2_H
+#define DUINOTAGV2_H
 //---------------------------------------------------------------------------
-#include <Arduino.h>
 
-#include "IRremote.h"
+#include <Custom IR\IRremote.h>
 
-#include "toneAC.h"
+#include <ToneAC\toneAC.h>
 
-#include "Adafruit_NeoPixel.h"
+#include <Neopixel\Adafruit_NeoPixel.h>
 
-#include "FlexiTimer2.h"
+#include <FlexiTimer\FlexiTimer2.h>
 
 #define myByte unsigned int
 
