@@ -7,11 +7,13 @@ If you would like to develop for this, there are 5 things you will need:
 
 A good IDE, or at least a functional one.  I use <a href="http://dalpix.com/mariamole">this one.</a>
 
-<a href="https://code.google.com/p/arduino-tone-ac/">Tone AC Library</a>
+<a href="https://bitbucket.org/teckel12/arduino-toneac/wiki/Home">Tone AC Library</a>
 
 <a href="https://github.com/adafruit/Adafruit_NeoPixel">Neopixel Library</a>
 
 <a href="https://github.com/z3t0/Arduino-IRremote/releases">IRremote Library (I use version 1.0)</a>
+
+You will also have to replace the IRremoteInt.h with the one included in Custom IR.
 
 
 If you need to test transmision and such:
