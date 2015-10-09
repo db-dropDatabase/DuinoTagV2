@@ -3,6 +3,7 @@
 #include "header.h"
 
 using namespace std;
+using namespace Sounds;
 
 Suit laser;
 IRrecv recver(4);  // I KNOW I SPELLED IT WRONG
@@ -11,7 +12,7 @@ long int lastTime=0;
 
 void setup(){
 	#ifdef DEBUG
-	Serial.begin(9600);
+	Serial.begin(115200);
 	delay(200);
 	Serial.println("Booting up...");
 	#endif
@@ -20,12 +21,10 @@ void setup(){
 	Serial.println("IR initilization done");
 	Serial.println("Entering setup mode");
 	#endif
-	laser.waitForSetup(&recver);
+	//laser.waitForSetup(&recver);
 	//pinMode(triggerPin, INPUT_PULLUP);
 	pinMode(13,OUTPUT); //used as game indicator during setup
-	//laser.setup(0x02,0x10,&recver);
-	//laser.clipSize=100;
-	//laser.clipNum=25;
+	laser.setup(0x02,0x10,&recver);
 	//laser.startHealth=0x24;
 	#ifdef DEBUG
 	Serial.println("Suit setup done");
@@ -35,17 +34,20 @@ void setup(){
 	#endif
 	digitalWrite(13, HIGH);
 	delay(5000);
-	//laser.sCommand(cStartGame,0);
 	digitalWrite(13, LOW);
+	laser.sCommand(cStartGame,0);
 }
 
 
 void loop(){
-	if(millis()-lastTime > 10000){
-		laser.gunCommand(gShoot,0);
+	if(millis()-lastTime > 100){
+		if(!laser.gunCommand(gShoot,0)) laser.gunCommand(gReload,0);
+		#ifdef DEBUG
+		Serial.println("BANG");
+		#endif
 		lastTime=millis();
 	}
 	if(laser.checkStatus()){
-		
+		laser.sCommand(cRespawn,0);
 	}
 }
