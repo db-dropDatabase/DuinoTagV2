@@ -29,6 +29,6 @@
 
 # Arduino
 *.d
-*.a
 *.elf
 *.hex
+/Sming/

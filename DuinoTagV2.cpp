@@ -489,7 +489,7 @@ void Arduino::reset(){
 		commandBuffer[i] = null;
 	}
 	Sounds::reset();
-	noToneAC();
+	//noToneAC();
 	paused=false;
 }
 
@@ -675,8 +675,8 @@ void Sounds::reset(){
 	currentSound.interval=0;
 	playingSound=false;
 	paused=false;
-	FlexiTimer2::stop();
-	noToneAC();
+	//FlexiTimer2::stop();
+	//noToneAC();
 }
 
 //simple enough
@@ -689,8 +689,8 @@ void Sounds::pause(){
 		currentSound.end=0;
 		currentSound.interval=0;
 		playingSound=false;
-		FlexiTimer2::stop();
-		noToneAC();
+		//FlexiTimer2::stop();
+		//noToneAC();
 	}
 	paused = !paused;
 }
@@ -706,14 +706,14 @@ void Sounds::playSound(const soundProp sound){
 		Serial.println(currentSound.start);
 		#endif
 		currentFreq=currentSound.start;
-		FlexiTimer2::set(1, (float)(currentSound.interval/1000000), updateSound);
-		FlexiTimer2::start();
+		//FlexiTimer2::set(1, (float)(currentSound.interval/1000000), updateSound);
+		//FlexiTimer2::start();
 	}
 	playingSound=true;
 }
 
 void Sounds::updateSound(void){ //technicly an ISR
-	toneAC(currentFreq);
+	//toneAC(currentFreq);
 	if(!currentSound.escalating){
 		currentFreq-=currentSound.interval;
 		if(currentFreq<=currentSound.end){
@@ -1076,6 +1076,9 @@ Suit::Suit(void){
 	currentProfile = gunValues;
 	currentClip = gunValues.clipSize;
 	currentAmmo = gunValues.clipNum;
+
+	//IR 
+	irtrans.begin(sendingPin);
 }
 
 parsedPacket Suit::readPacket(packet packetYay){
@@ -1471,9 +1474,9 @@ bool Suit::gunCommand(GunCommands command, int amount){
 					currentClip--;
 				}
 				delayMicroseconds(100);
-				irsend.sendRaw(shotPacket, 30, frequency);
+				irtrans.sendRaw(shotPacket, 30, frequency);
 				delayMicroseconds(100);
-				recv->enableIRIn();
+				//recv->enableIRIn();
 				#ifdef DEBUG
 				Serial.println("BANG");
 				Serial.println(rpmDelay);

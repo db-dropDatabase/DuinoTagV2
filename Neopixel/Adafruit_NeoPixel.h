@@ -42,6 +42,11 @@
 #define NEO_KHZ400  0x00 // 400 KHz datastream
 #endif
 
+//ESP!
+#ifndef ESP8266
+#define ESP8266
+#endif
+
 class Adafruit_NeoPixel {
 
  public:

@@ -3,30 +3,30 @@
 #define DUINOTAGV2_H
 //---------------------------------------------------------------------------
 
-#include <Custom IR\IRremote.h>
+#define ESP8266 //for neopixel stuff
 
-#include <ToneAC\toneAC.h>
+#include <Custom IR\IRremoteESP8266.h>
+
+//#include <ToneAC\toneAC.h>
 
 #include <Neopixel\Adafruit_NeoPixel.h>
 
-#include <FlexiTimer\FlexiTimer2.h>
+//#include <FlexiTimer\FlexiTimer2.h>
 
 #define myByte unsigned int
 
 #define constDelay 1000
 #define sPacketLength 29
 const int frequency = 56;
-#define sendPin 3 //never used in code, but still important
+const int sendingPin = 0; //never used in code, but still important
 #define recievePin A4
 #define muzzlePin 2 //light pins below
-#define leftPin 5
-#define rightPin 6
+#define leftPin 0
+#define rightPin 1
 #define hitPin A0
 #define buzzerPin 10 //other pins, with buzzer both 9 and 10 are taken
 #define triggerPin 12
-#define neoPin 11
-
-using namespace std;
+#define neoPin 8
 
 /*--MARIMOLE-DEF_BEGIN--*/
 void loop();
@@ -313,7 +313,7 @@ enum SuitCommmands{  //also includes message packet commands
 		unsigned long int tmpTime;
 		
 		parsedPacket readPacket(packet packetYay);
-		IRsend irsend;
+		IRsend irtrans;
 	};
 	
 	#endif

@@ -131,7 +131,7 @@ void Adafruit_NeoPixel::show(void) {
   // state, computes 'pin high' and 'pin low' values, and writes these back
   // to the PORT register as needed.
 
-  noInterrupts(); // Need 100% focus on instruction timing
+  cli(); // Need 100% focus on instruction timing
 
 
 #ifdef __AVR__

@@ -21,16 +21,10 @@
     <ClCompile Include="DuinoTagV2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Custom IR\IRremote.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FlexiTimer\FlexiTimer2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ToneAC\toneAC.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Neopixel\Adafruit_NeoPixel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Custom IR\IRremoteESP8266.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,22 +35,16 @@
     <ClInclude Include="__vm\.port32U4.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Custom IR\IRremote.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Custom IR\IRremoteInt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FlexiTimer\FlexiTimer2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ToneAC\toneAC.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="__vm\.Github.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Neopixel\Adafruit_NeoPixel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom IR\IRremoteESP8266.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom IR\IRremoteInt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

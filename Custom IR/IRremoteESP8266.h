@@ -1,8 +1,11 @@
-/*
- * IRremote
- * Version 0.1 July, 2009
+ /***************************************************
+ * IRremote for ESP8266
+ * 
+ * Based on the IRremote library for Arduino by Ken Shirriff 
+ * Version 0.11 August, 2009
  * Copyright 2009 Ken Shirriff
- * For details, see http://arcfn.com/2009/08/multi-protocol-infrared-remote-library.htm http://arcfn.com
+ * For details, see http://arcfn.com/2009/08/multi-protocol-infrared-remote-library.html
+ *
  * Edited by Mitra to add new controller SANYO
  *
  * Interrupt code based on NECIRrcv by Joe Knapp
@@ -12,7 +15,12 @@
  * JVC and Panasonic protocol added by Kristian Lauszus (Thanks to zenwheel and other people at the original blog post)
  * LG added by Darryl Smith (based on the JVC protocol)
  * Whynter A/C ARC-110WD added by Francesco Meschia
- */
+ *
+ * Updated by markszabo (https://github.com/markszabo/IRremoteESP8266) for sending IR code on ESP8266
+ * Updated by Sebastien Warin (http://sebastien.warin.fr) for receiving IR code on ESP8266
+ *
+ * GPL license, all text above must be included in any redistribution
+ ****************************************************/
 
 #ifndef IRremote_h
 #define IRremote_h
@@ -23,7 +31,26 @@
 // TEST must be defined for the IRtest unittests to work.  It will make some
 // methods virtual, which will be slightly slower, which is why it is optional.
 //#define DEBUG
-// #define TEST
+//#define TEST
+
+enum decode_type_t {
+  NEC = 1,
+  SONY = 2,
+  RC5 = 3,
+  RC6 = 4,
+  DISH = 5,
+  SHARP = 6,
+  PANASONIC = 7,
+  JVC = 8,
+  SANYO = 9,
+  MITSUBISHI = 10,
+  SAMSUNG = 11,
+  LG = 12,
+  WHYNTER = 13,
+  AIWA_RC_T501 = 14,
+
+  UNKNOWN = -1
+};
 
 // Results returned from the decoder
 class decode_results {
@@ -63,11 +90,11 @@ class IRrecv
 {
 public:
   IRrecv(int recvpin);
-  void blink13(int blinkflag);
   int decode(decode_results *results);
   void enableIRIn();
+  void disableIRIn();
   void resume();
-private:
+  private:
   // These are called by decode
   int getRClevel(decode_results *results, int *offset, int *used, int t1);
   long decodeNEC(decode_results *results);
@@ -83,8 +110,7 @@ private:
   long decodeWhynter(decode_results *results);
   long decodeHash(decode_results *results);
   int compare(unsigned int oldval, unsigned int newval);
-
-} ;
+};
 
 // Only used for testing; can remove virtual for shorter code
 #ifdef TEST
@@ -92,11 +118,11 @@ private:
 #else
 #define VIRTUAL
 #endif
-
 class IRsend
 {
 public:
-  IRsend() {}
+  IRsend();
+  void begin(int pin);
   void sendWhynter(unsigned long data, int nbits);
   void sendNEC(unsigned long data, int nbits);
   void sendSony(unsigned long data, int nbits);
@@ -111,15 +137,16 @@ public:
   void sendSharpRaw(unsigned long data, int nbits);
   void sendPanasonic(unsigned int address, unsigned long data);
   void sendJVC(unsigned long data, int nbits, int repeat); // *Note instead of sending the REPEAT constant if you want the JVC repeat signal sent, send the original code value and change the repeat argument from 0 to 1. JVC protocol repeats by skipping the header NOT by sending a separate code value like NEC does.
-  // private:
   void sendSAMSUNG(unsigned long data, int nbits);
   void enableIROut(int khz);
   VIRTUAL void mark(int usec);
   VIRTUAL void space(int usec);
+private:
+  int halfPeriodicTime;
+  int IRpin;
 } ;
 
 // Some useful constants
-
 #define USECPERTICK 50  // microseconds per clock interrupt tick
 #define RAWBUF 100 // Length of raw duration buffer
 

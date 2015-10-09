@@ -1,5 +1,7 @@
-/*
- * IRremote
+ /***************************************************
+ * IRremote for ESP8266
+ *
+ * Based on the IRremote library for Arduino by Ken Shirriff 
  * Version 0.11 August, 2009
  * Copyright 2009 Ken Shirriff
  * For details, see http://arcfn.com/2009/08/multi-protocol-infrared-remote-library.html
@@ -16,20 +18,20 @@
  * JVC and Panasonic protocol added by Kristian Lauszus (Thanks to zenwheel and other people at the original blog post)
  * LG added by Darryl Smith (based on the JVC protocol)
  * Whynter A/C ARC-110WD added by Francesco Meschia
- */
+ *
+ * Updated by markszabo (https://github.com/markszabo/IRremoteESP8266) for sending IR code on ESP8266
+ * Updated by Sebastien Warin (http://sebastien.warin.fr) for receiving IR code on ESP8266
+ *
+ *  GPL license, all text above must be included in any redistribution
+ ****************************************************/
 
-#include "IRremote.h"
+#include "IRremoteESP8266.h"
 #include "IRremoteInt.h"
-
-// Provides ISR
-#include <avr/interrupt.h>
-
-volatile irparams_t irparams;
 
 // These versions of MATCH, MATCH_MARK, and MATCH_SPACE are only for debugging.
 // To use them, set DEBUG in IRremoteInt.h
 // Normally macros are used for efficiency
-#ifdef DEBUG
+#ifdef IR_DEBUG
 int MATCH(int measured, int desired) {
   Serial.print("Testing: ");
   Serial.print(TICKS_LOW(desired), DEC);
@@ -73,6 +75,19 @@ int MATCH_MARK(int measured_ticks, int desired_us) {return MATCH(measured_ticks,
 int MATCH_SPACE(int measured_ticks, int desired_us) {return MATCH(measured_ticks, (desired_us - MARK_EXCESS));}
 // Debugging versions are in IRremote.cpp
 #endif
+
+// IRsend -----------------------------------------------------------------------------------
+
+IRsend::IRsend()
+{
+	//IRpin = IRsendPin;
+}
+
+void IRsend::begin(int pin)
+{
+	IRpin = pin;
+	pinMode(IRpin, OUTPUT);
+}
 
 void IRsend::sendNEC(unsigned long data, int nbits)
 {
@@ -273,163 +288,183 @@ void IRsend::sendSAMSUNG(unsigned long data, int nbits)
 void IRsend::mark(int time) {
   // Sends an IR mark for the specified number of microseconds.
   // The mark output is modulated at the PWM frequency.
-  TIMER_ENABLE_PWM; // Enable pin 3 PWM output
-  if (time > 0) delayMicroseconds(time);
+  long beginning = micros();
+  while(micros() - beginning < time){
+    digitalWrite(IRpin, HIGH);
+    delayMicroseconds(halfPeriodicTime);
+    digitalWrite(IRpin, LOW);
+    delayMicroseconds(halfPeriodicTime); //38 kHz -> T = 26.31 microsec (periodic time), half of it is 13
+  }
 }
 
 /* Leave pin off for time (given in microseconds) */
 void IRsend::space(int time) {
   // Sends an IR space for the specified number of microseconds.
   // A space is no output, so the PWM output is disabled.
-  TIMER_DISABLE_PWM; // Disable pin 3 PWM output
+  digitalWrite(IRpin, LOW);
   if (time > 0) delayMicroseconds(time);
 }
 
 void IRsend::enableIROut(int khz) {
   // Enables IR output.  The khz value controls the modulation frequency in kilohertz.
-  // The IR output will be on pin 3 (OC2B).
-  // This routine is designed for 36-40KHz; if you use it for other values, it's up to you
-  // to make sure it gives reasonable results.  (Watch out for overflow / underflow / rounding.)
-  // TIMER2 is used in phase-correct PWM mode, with OCR2A controlling the frequency and OCR2B
-  // controlling the duty cycle.
-  // There is no prescaling, so the output frequency is 16MHz / (2 * OCR2A)
-  // To turn the output on and off, we leave the PWM running, but connect and disconnect the output pin.
-  // A few hours staring at the ATmega documentation and this will all make sense.
-  // See my Secrets of Arduino PWM at http://arcfn.com/2009/07/secrets-of-arduino-pwm.html for details.
-
-  
-  // Disable the Timer2 Interrupt (which is used for receiving IR)
-  TIMER_DISABLE_INTR; //Timer2 Overflow Interrupt
-  
-  pinMode(TIMER_PWM_PIN, OUTPUT);
-  digitalWrite(TIMER_PWM_PIN, LOW); // When not sending PWM, we want it low
-  
-  // COM2A = 00: disconnect OC2A
-  // COM2B = 00: disconnect OC2B; to send signal set to 10: OC2B non-inverted
-  // WGM2 = 101: phase-correct PWM with OCRA as top
-  // CS2 = 000: no prescaling
-  // The top value for the timer.  The modulation frequency will be SYSCLOCK / 2 / OCR2A.
-  TIMER_CONFIG_KHZ(khz);
+  halfPeriodicTime = 500/khz; // T = 1/f but we need T/2 in microsecond and f is in kHz
 }
 
-IRrecv::IRrecv(int recvpin)
-{
+
+/* Sharp and DISH support by Todd Treece ( http://unionbridge.org/design/ircommand )
+
+The Dish send function needs to be repeated 4 times, and the Sharp function
+has the necessary repeat built in because of the need to invert the signal.
+
+Sharp protocol documentation:
+http://www.sbprojects.com/knowledge/ir/sharp.htm
+
+Here are the LIRC files that I found that seem to match the remote codes
+from the oscilloscope:
+
+Sharp LCD TV:
+http://lirc.sourceforge.net/remotes/sharp/GA538WJSA
+
+DISH NETWORK (echostar 301):
+http://lirc.sourceforge.net/remotes/echostar/301_501_3100_5100_58xx_59xx
+
+For the DISH codes, only send the last for characters of the hex.
+i.e. use 0x1C10 instead of 0x0000000000001C10 which is listed in the
+linked LIRC file.
+*/
+
+void IRsend::sendSharpRaw(unsigned long data, int nbits) {
+  enableIROut(38);
+
+  // Sending codes in bursts of 3 (normal, inverted, normal) makes transmission
+  // much more reliable. That's the exact behaviour of CD-S6470 remote control.
+  for (int n = 0; n < 3; n++) {
+    for (int i = 1 << (nbits-1); i > 0; i>>=1) {
+      if (data & i) {
+        mark(SHARP_BIT_MARK);
+        space(SHARP_ONE_SPACE);
+      }
+      else {
+        mark(SHARP_BIT_MARK);
+        space(SHARP_ZERO_SPACE);
+      }
+    }
+    
+    mark(SHARP_BIT_MARK);
+    space(SHARP_ZERO_SPACE);
+    delay(40);
+
+    data = data ^ SHARP_TOGGLE_MASK;
+  }
+}
+
+// Sharp send compatible with data obtained through decodeSharp
+void IRsend::sendSharp(unsigned int address, unsigned int command) {
+  sendSharpRaw((address << 10) | (command << 2) | 2, 15);
+}
+
+void IRsend::sendDISH(unsigned long data, int nbits) {
+  enableIROut(56);
+  mark(DISH_HDR_MARK);
+  space(DISH_HDR_SPACE);
+  for (int i = 0; i < nbits; i++) {
+    if (data & DISH_TOP_BIT) {
+      mark(DISH_BIT_MARK);
+      space(DISH_ONE_SPACE);
+    }
+    else {
+      mark(DISH_BIT_MARK);
+      space(DISH_ZERO_SPACE);
+    }
+    data <<= 1;
+  }
+} 
+ 
+// ---------------------------------------------------------------
+  
+
+//IRRecv------------------------------------------------------
+
+extern "C" {
+	#include "user_interface.h"
+	#include "gpio.h"
+}
+
+static ETSTimer timer;
+volatile irparams_t irparams;
+
+static void ICACHE_FLASH_ATTR read_timeout(void *arg) {
+    os_intr_lock();
+    if (irparams.rawlen) {
+		irparams.rcvstate = STATE_STOP;
+    }
+	os_intr_unlock();
+}
+
+static void ICACHE_FLASH_ATTR gpio_intr(void *arg) {
+    uint32_t gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
+    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
+
+	if (irparams.rcvstate == STATE_STOP) {
+		return;
+	}	
+    static uint32_t start = 0;
+    uint32_t now = system_get_time();
+	if (irparams.rcvstate == STATE_IDLE) {
+		irparams.rcvstate = STATE_MARK;	
+	}
+    else if (irparams.rawlen < RAWBUF) {
+		irparams.rawbuf[irparams.rawlen++] = (now - start) / USECPERTICK + 1;
+    }
+    start = now;
+
+    os_timer_disarm(&timer);
+    os_timer_arm(&timer, 15, 0);
+}
+
+IRrecv::IRrecv(int recvpin) {
   irparams.recvpin = recvpin;
-  irparams.blinkflag = 0;
 }
 
 // initialization
 void IRrecv::enableIRIn() {
-  cli();
-  // setup pulse clock timer interrupt
-  //Prescale /8 (16M/8 = 0.5 microseconds per tick)
-  // Therefore, the timer interval can range from 0.5 to 128 microseconds
-  // depending on the reset value (255 to 0)
-  TIMER_CONFIG_NORMAL();
-
-  //Timer2 Overflow Interrupt Enable
-  TIMER_ENABLE_INTR;
-
-  TIMER_RESET;
-
-  sei();  // enable interrupts
-
+	
   // initialize state machine variables
   irparams.rcvstate = STATE_IDLE;
   irparams.rawlen = 0;
 
-  // set pin modes
-  pinMode(irparams.recvpin, INPUT);
+  // set pin modes  
+  //PIN_FUNC_SELECT(IR_IN_MUX, IR_IN_FUNC);
+  GPIO_DIS_OUTPUT(irparams.recvpin);
+  
+  // Initialize timer
+  os_timer_disarm(&timer);
+  os_timer_setfn(&timer, (os_timer_func_t *)read_timeout, &timer);
+  
+  // ESP Attach Interrupt
+  ETS_GPIO_INTR_DISABLE();
+  ETS_GPIO_INTR_ATTACH(gpio_intr, NULL);
+  gpio_pin_intr_state_set(GPIO_ID_PIN(irparams.recvpin), GPIO_PIN_INTR_ANYEDGE);
+  ETS_GPIO_INTR_ENABLE();
+  //ETS_INTR_UNLOCK();  
+  
+  //attachInterrupt(irparams.recvpin, readIR, CHANGE);  
+  //irReadTimer.initializeUs(USECPERTICK, readIR).start();
+  //os_timer_arm_us(&irReadTimer, USECPERTICK, 1);
+  //ets_timer_arm_new(&irReadTimer, USECPERTICK, 1, 0);
 }
 
-// enable/disable blinking of pin 13 on IR processing
-void IRrecv::blink13(int blinkflag)
-{
-  irparams.blinkflag = blinkflag;
-  if (blinkflag)
-    pinMode(BLINKLED, OUTPUT);
-}
-
-// TIMER2 interrupt code to collect raw data.
-// Widths of alternating SPACE, MARK are recorded in rawbuf.
-// Recorded in ticks of 50 microseconds.
-// rawlen counts the number of entries recorded so far.
-// First entry is the SPACE between transmissions.
-// As soon as a SPACE gets long, ready is set, state switches to IDLE, timing of SPACE continues.
-// As soon as first MARK arrives, gap width is recorded, ready is cleared, and new logging starts
-ISR(TIMER_INTR_NAME)
-{
-  TIMER_RESET;
-
-  uint8_t irdata = (uint8_t)digitalRead(irparams.recvpin);
-
-  irparams.timer++; // One more 50us tick
-  if (irparams.rawlen >= RAWBUF) {
-    // Buffer overflow
-    irparams.rcvstate = STATE_STOP;
-  }
-  switch(irparams.rcvstate) {
-  case STATE_IDLE: // In the middle of a gap
-    if (irdata == MARK) {
-      if (irparams.timer < GAP_TICKS) {
-        // Not big enough to be a gap.
-        irparams.timer = 0;
-      } 
-      else {
-        // gap just ended, record duration and start recording transmission
-        irparams.rawlen = 0;
-        irparams.rawbuf[irparams.rawlen++] = irparams.timer;
-        irparams.timer = 0;
-        irparams.rcvstate = STATE_MARK;
-      }
-    }
-    break;
-  case STATE_MARK: // timing MARK
-    if (irdata == SPACE) {   // MARK ended, record time
-      irparams.rawbuf[irparams.rawlen++] = irparams.timer;
-      irparams.timer = 0;
-      irparams.rcvstate = STATE_SPACE;
-    }
-    break;
-  case STATE_SPACE: // timing SPACE
-    if (irdata == MARK) { // SPACE just ended, record it
-      irparams.rawbuf[irparams.rawlen++] = irparams.timer;
-      irparams.timer = 0;
-      irparams.rcvstate = STATE_MARK;
-    } 
-    else { // SPACE
-      if (irparams.timer > GAP_TICKS) {
-        // big SPACE, indicates gap between codes
-        // Mark current code as ready for processing
-        // Switch to STOP
-        // Don't reset timer; keep counting space width
-        irparams.rcvstate = STATE_STOP;
-      } 
-    }
-    break;
-  case STATE_STOP: // waiting, measuring gap
-    if (irdata == MARK) { // reset gap timer
-      irparams.timer = 0;
-    }
-    break;
-  }
-
-  if (irparams.blinkflag) {
-    if (irdata == MARK) {
-      BLINKLED_ON();  // turn pin 13 LED on
-    } 
-    else {
-      BLINKLED_OFF();  // turn pin 13 LED off
-    }
-  }
+void IRrecv::disableIRIn() {
+  //irReadTimer.stop();
+  //os_timer_disarm(&irReadTimer);   
+   ETS_INTR_LOCK();
+   ETS_GPIO_INTR_DISABLE();
 }
 
 void IRrecv::resume() {
   irparams.rcvstate = STATE_IDLE;
   irparams.rawlen = 0;
 }
-
-
 
 // Decodes the received IR message
 // Returns 0 if no data ready, 1 if data ready.
@@ -446,18 +481,20 @@ int IRrecv::decode(decode_results *results) {
   if (decodeNEC(results)) {
     return DECODED;
   }
+
 #ifdef DEBUG
   Serial.println("Attempting Sony decode");
 #endif
   if (decodeSony(results)) {
     return DECODED;
   }
+  /*
 #ifdef DEBUG
   Serial.println("Attempting Sanyo decode");
 #endif
   if (decodeSanyo(results)) {
     return DECODED;
-  }
+  }*/
 #ifdef DEBUG
   Serial.println("Attempting Mitsubishi decode");
 #endif
@@ -520,7 +557,7 @@ int IRrecv::decode(decode_results *results) {
 // NECs have a repeat only 4 items long
 long IRrecv::decodeNEC(decode_results *results) {
   long data = 0;
-  int offset = 1; // Skip first space
+  int offset = 1; // Skip initial space
   // Initial mark
   if (!MATCH_MARK(results->rawbuf[offset], NEC_HDR_MARK)) {
     return ERR;
@@ -573,6 +610,7 @@ long IRrecv::decodeSony(decode_results *results) {
   }
   int offset = 0; // Dont skip first space, check its size
 
+  /*
   // Some Sony's deliver repeats fast after first
   // unfortunately can't spot difference from of repeat from two fast clicks
   if (results->rawbuf[offset] < SONY_DOUBLE_SPACE_USECS) {
@@ -581,7 +619,7 @@ long IRrecv::decodeSony(decode_results *results) {
     results->value = REPEAT;
     results->decode_type = SANYO;
     return DECODED;
-  }
+  }*/
   offset++;
 
   // Initial mark
@@ -625,7 +663,8 @@ long IRrecv::decodeWhynter(decode_results *results) {
      return ERR;
   }
   
-  int offset = 1; // skip initial space
+  int offset = 1; // Skip first space
+
 
   // sequence begins with a bit mark and a zero space
   if (!MATCH_MARK(results->rawbuf[offset], WHYNTER_BIT_MARK)) {
@@ -676,7 +715,6 @@ long IRrecv::decodeWhynter(decode_results *results) {
   return DECODED;
 }
 
-
 // I think this is a Sanyo decoder - serial = SA 8650B
 // Looks like Sony except for timings, 48 chars of data and time/space different
 long IRrecv::decodeSanyo(decode_results *results) {
@@ -684,7 +722,9 @@ long IRrecv::decodeSanyo(decode_results *results) {
   if (irparams.rawlen < 2 * SANYO_BITS + 2) {
     return ERR;
   }
-  int offset = 0; // Skip first space
+  int offset = 1; // Skip first space
+
+  
   // Initial space  
   /* Put this back in for debugging - note can't use #DEBUG as if Debug on we don't see the repeat cos of the delay
   Serial.print("IR Gap: ");
@@ -692,6 +732,7 @@ long IRrecv::decodeSanyo(decode_results *results) {
   Serial.println( "test against:");
   Serial.println(results->rawbuf[offset]);
   */
+
   if (results->rawbuf[offset] < SANYO_DOUBLE_SPACE_USECS) {
     // Serial.print("IR Gap found: ");
     results->bits = 0;
@@ -748,7 +789,7 @@ long IRrecv::decodeMitsubishi(decode_results *results) {
   if (irparams.rawlen < 2 * MITSUBISHI_BITS + 2) {
     return ERR;
   }
-  int offset = 0; // Skip first space
+  int offset = 1; // Skip first space
   // Initial space  
   /* Put this back in for debugging - note can't use #DEBUG as if Debug on we don't see the repeat cos of the delay
   Serial.print("IR Gap: ");
@@ -765,6 +806,7 @@ long IRrecv::decodeMitsubishi(decode_results *results) {
     return DECODED;
   }
   */
+
   offset++;
 
   // Typical
@@ -804,7 +846,6 @@ long IRrecv::decodeMitsubishi(decode_results *results) {
   results->decode_type = MITSUBISHI;
   return DECODED;
 }
-
 
 // Gets one undecoded level at a time from the raw buffer.
 // The RC5/6 decoding is easier if the data is broken into time intervals.
@@ -937,27 +978,26 @@ long IRrecv::decodeRC6(decode_results *results) {
   results->decode_type = RC6;
   return DECODED;
 }
+
 long IRrecv::decodePanasonic(decode_results *results) {
     unsigned long long data = 0;
-    int offset = 1;
-    
-    if (!MATCH_MARK(results->rawbuf[offset], PANASONIC_HDR_MARK)) {
+	int offset = 1;  // Dont skip first space    
+    /*if (!MATCH_MARK(results->rawbuf[offset], PANASONIC_HDR_MARK)) {
         return ERR;
     }
-    offset++;
+    offset++;*/		
     if (!MATCH_MARK(results->rawbuf[offset], PANASONIC_HDR_SPACE)) {
         return ERR;
     }
-    offset++;
-    
+    offset++;    
     // decode address
     for (int i = 0; i < PANASONIC_BITS; i++) {
-        if (!MATCH_MARK(results->rawbuf[offset++], PANASONIC_BIT_MARK)) {
+        if (!MATCH(results->rawbuf[offset++], PANASONIC_BIT_MARK)) {
             return ERR;
         }
-        if (MATCH_SPACE(results->rawbuf[offset],PANASONIC_ONE_SPACE)) {
+        if (MATCH(results->rawbuf[offset],PANASONIC_ONE_SPACE)) {
             data = (data << 1) | 1;
-        } else if (MATCH_SPACE(results->rawbuf[offset],PANASONIC_ZERO_SPACE)) {
+        } else if (MATCH(results->rawbuf[offset],PANASONIC_ZERO_SPACE)) {
             data <<= 1;
         } else {
             return ERR;
@@ -973,7 +1013,7 @@ long IRrecv::decodePanasonic(decode_results *results) {
 
 long IRrecv::decodeLG(decode_results *results) {
     long data = 0;
-    int offset = 1; // Skip first space
+	int offset = 1; // Skip first space
   
     // Initial mark
     if (!MATCH_MARK(results->rawbuf[offset], LG_HDR_MARK)) {
@@ -1015,10 +1055,9 @@ long IRrecv::decodeLG(decode_results *results) {
     return DECODED;
 }
 
-
 long IRrecv::decodeJVC(decode_results *results) {
     long data = 0;
-    int offset = 1; // Skip first space
+	int offset = 1; // Skip first space
     // Check for repeat
     if (irparams.rawlen - 1 == 33 &&
         MATCH_MARK(results->rawbuf[offset], JVC_BIT_MARK) &&
@@ -1071,7 +1110,7 @@ long IRrecv::decodeJVC(decode_results *results) {
 // SAMSUNGs have a repeat only 4 items long
 long IRrecv::decodeSAMSUNG(decode_results *results) {
   long data = 0;
-  int offset = 1; // Skip first space
+  int offset = 0;  // Dont skip first space
   // Initial mark
   if (!MATCH_MARK(results->rawbuf[offset], SAMSUNG_HDR_MARK)) {
     return ERR;
@@ -1086,7 +1125,7 @@ long IRrecv::decodeSAMSUNG(decode_results *results) {
     results->decode_type = SAMSUNG;
     return DECODED;
   }
-  if (irparams.rawlen < 2 * SAMSUNG_BITS + 4) {
+  if (irparams.rawlen < 2 * SAMSUNG_BITS + 2) {
     return ERR;
   }
   // Initial space  
@@ -1171,71 +1210,4 @@ long IRrecv::decodeHash(decode_results *results) {
   return DECODED;
 }
 
-/* Sharp and DISH support by Todd Treece ( http://unionbridge.org/design/ircommand )
-
-The Dish send function needs to be repeated 4 times, and the Sharp function
-has the necessary repeat built in because of the need to invert the signal.
-
-Sharp protocol documentation:
-http://www.sbprojects.com/knowledge/ir/sharp.htm
-
-Here are the LIRC files that I found that seem to match the remote codes
-from the oscilloscope:
-
-Sharp LCD TV:
-http://lirc.sourceforge.net/remotes/sharp/GA538WJSA
-
-DISH NETWORK (echostar 301):
-http://lirc.sourceforge.net/remotes/echostar/301_501_3100_5100_58xx_59xx
-
-For the DISH codes, only send the last for characters of the hex.
-i.e. use 0x1C10 instead of 0x0000000000001C10 which is listed in the
-linked LIRC file.
-*/
-
-void IRsend::sendSharpRaw(unsigned long data, int nbits) {
-  enableIROut(38);
-
-  // Sending codes in bursts of 3 (normal, inverted, normal) makes transmission
-  // much more reliable. That's the exact behaviour of CD-S6470 remote control.
-  for (int n = 0; n < 3; n++) {
-    for (int i = 1 << (nbits-1); i > 0; i>>=1) {
-      if (data & i) {
-        mark(SHARP_BIT_MARK);
-        space(SHARP_ONE_SPACE);
-      }
-      else {
-        mark(SHARP_BIT_MARK);
-        space(SHARP_ZERO_SPACE);
-      }
-    }
-    
-    mark(SHARP_BIT_MARK);
-    space(SHARP_ZERO_SPACE);
-    delay(40);
-
-    data = data ^ SHARP_TOGGLE_MASK;
-  }
-}
-
-// Sharp send compatible with data obtained through decodeSharp
-void IRsend::sendSharp(unsigned int address, unsigned int command) {
-  sendSharpRaw((address << 10) | (command << 2) | 2, 15);
-}
-
-void IRsend::sendDISH(unsigned long data, int nbits) {
-  enableIROut(56);
-  mark(DISH_HDR_MARK);
-  space(DISH_HDR_SPACE);
-  for (int i = 0; i < nbits; i++) {
-    if (data & DISH_TOP_BIT) {
-      mark(DISH_BIT_MARK);
-      space(DISH_ONE_SPACE);
-    }
-    else {
-      mark(DISH_BIT_MARK);
-      space(DISH_ZERO_SPACE);
-    }
-    data <<= 1;
-  }
-}
+// ---------------------------------------------------------------
