@@ -28,7 +28,6 @@
 *.app
 
 # Arduino
-*.ino
 *.d
 *.a
 *.elf
