@@ -215,22 +215,21 @@ enum SuitCommmands{  //also includes message packet commands
 		Adafruit_NeoPixel left;  //these are left side team
 		Adafruit_NeoPixel right;
 	};
-	
-	class Sounds{  //updating lights semi-consistintly works, but it doesn't for sound.  This class will handle it all in an ISR which will be called every 100us or so
-		//is will also be nested inside Arduino, but will be pretty much handled by Arduino
-		public:
-		
-		bool playSound(const soundProp sound);
-		void updateSound(void); //called by timer 3
-		void reset();
-		void pause();
-		Sounds(); //just calls setup and then reset
-		bool playingSound;
-		private:
-		volatile int currentFreq;
-		bool paused;
-		soundProp currentSound;
-	};
+	//gonna use namespace instead of class b/c of library
+	//and really, sounds are global anyway
+	//maybe I should make arduino a namespace...
+	//f that
+	namespace Sounds{  //updating lights semi-consistintly works, but it doesn't for sound.  This namespace will handle it all in an ISR which will be called every 100us or so
+		//is will also be pretty much handled by Arduino
+		extern void playSound(const soundProp sound);
+		extern void updateSound(void); //called by timer 3
+		extern void reset();
+		extern void pause();
+		extern volatile int currentFreq;
+		extern volatile bool playingSound;
+		extern volatile bool paused;
+		extern volatile soundProp currentSound;
+	}
 	
 	class Stats{
 		public:

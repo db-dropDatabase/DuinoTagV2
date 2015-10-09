@@ -10,6 +10,12 @@
 
 using namespace std;
 
+//Sounds varibles that have to be declared
+volatile bool Sounds::playingSound;
+volatile int Sounds::currentFreq;
+volatile bool Sounds::paused;
+volatile soundProp Sounds::currentSound;
+
 //used to remove some compilier optimization
 //hopefully
 
@@ -348,6 +354,7 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		}
 		break;
 		case playHit:
+		/* test new sound implementation
 		if(!pewOverride){
 			noToneAC();
 			soundDelay=750;
@@ -365,8 +372,21 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 			soundDelay=0;
 			pewOverride=false;
 		}
+		*/ 
+		if(!pewOverride){
+			pewOverride=true;
+			Sounds::playSound(pHit);
+			return false;
+		}
+		else if(Sounds::playingSound){
+			return false;
+		}
+		else{
+			pewOverride=false;
+		}
 		break;
 		case playDead:
+		/* test implementation of new sound system
 		if(!pewOverride){
 			#ifdef DEBUG
 			Serial.println("DEAD!");
@@ -387,8 +407,21 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 			soundDelay=0;
 			pewOverride=false;
 		}
+		*/
+		if(!pewOverride){
+			pewOverride=true;
+			Sounds::playSound(pDead);
+			return false;
+		}
+		else if(Sounds::playingSound){
+			return false;
+		}
+		else{
+			pewOverride=false;
+		}
 		break;
 		case playGameOn:
+		/* test implementation of new sound system
 		if(!pewOverride){
 			#ifdef DEBUG
 			Serial.println("PEW");
@@ -406,6 +439,18 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		else{
 			soundDelay=0;
 			noToneAC();
+			pewOverride=false;
+		}
+		*/
+		if(!pewOverride){
+			pewOverride=true;
+			Sounds::playSound(pStart);
+			return false;
+		}
+		else if(Sounds::playingSound){
+			return false;
+		}
+		else{
 			pewOverride=false;
 		}
 		break;
@@ -444,6 +489,7 @@ void Arduino::reset(){
 	for(int i=0; i<5; i++){
 		commandBuffer[i] = null;
 	}
+	Sounds::reset();
 	noToneAC();
 	paused=false;
 }
@@ -475,9 +521,9 @@ void Arduino::changeValues(double aHealth, double aAmmo, double	aArmor){
 	}
 }
 void Arduino::playPew(){
-	pewCommand=true;
-	currentPew=0;
-	
+	if(!pewOverride){
+		Sounds::playSound(pPew);
+	}
 }
 
 bool Arduino::update(){
@@ -577,7 +623,9 @@ bool Arduino::update(){
 		commandBuffer[4] = null;
 		currentStep=0;
 	}
+	/* testing new pew implementation
 	if(pewCommand){
+		// replacing with sounds namespace
 		switch(currentPew){
 			case 0:
 			//muzzleOn
@@ -605,8 +653,10 @@ bool Arduino::update(){
 			
 			break;
 		}
+		
 	}
-	if(commandBuffer[0]==null && !pewCommand){
+	*/
+	if(commandBuffer[0]==null){
 		return false;
 	}
 	else{
@@ -620,40 +670,47 @@ Arduino::Arduino(void){
 
 void Sounds::reset(){
 	currentFreq=0;
-	currentSound=soundProp(); //should reset values?
-	paused=false;
+	currentSound.escalating=false;
+	currentSound.start=0;
+	currentSound.end=0;
+	currentSound.interval=0;
 	playingSound=false;
-	FlexiTimer2::start();
+	paused=false;
+	FlexiTimer2::stop();
+	noToneAC();
 }
 
-Sounds::Sounds(){
-	reset();
-}
 //simple enough
 
 void Sounds::pause(){
 	if(!paused){
 		currentFreq=0;
-		currentSound= soundProp(); //should reset values?
+		currentSound.escalating=false;
+		currentSound.start=0;
+		currentSound.end=0;
+		currentSound.interval=0;
 		playingSound=false;
 		FlexiTimer2::stop();
+		noToneAC();
 	}
 	paused = !paused;
 }
 
-bool Sounds::playSound(const soundProp sound){
+void Sounds::playSound(const soundProp sound){
 	if(!paused){
-		currentSound=sound;
+		currentSound.escalating=sound.escalating;
+		currentSound.start=sound.start;
+		currentSound.end=sound.end;
+		currentSound.interval=sound.interval; //ugh
+		#ifdef DEBUG
+		Serial.println("Playing Sound!");
+		Serial.println(currentSound.start);
+		#endif
 		currentFreq=currentSound.start;
 		FlexiTimer2::set(1, (float)(currentSound.interval/1000000), updateSound);
-		if(playingSound){  //the return value tells if it overrid another sound
-			return true;
-		}
-		else{
-			playingSound=true;
-			return false;
-		}
+		FlexiTimer2::start();
 	}
+	playingSound=true;
 }
 
 void Sounds::updateSound(void){ //technicly an ISR

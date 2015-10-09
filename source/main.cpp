@@ -3,6 +3,7 @@
 #include "header.h"
 
 using namespace std;
+using namespace Sounds;
 
 Suit laser;
 IRrecv recver(4);  // I KNOW I SPELLED IT WRONG
@@ -39,10 +40,11 @@ void setup(){
 
 
 void loop(){
-	if(millis()-lastTime > 200){
-		if(!laser.gunCommand(gShoot,0)){
-			laser.gunCommand(gReload,0);
-		}
+	if(millis()-lastTime > 100){
+		if(!laser.gunCommand(gShoot,0)) laser.gunCommand(gReload,0);
+		#ifdef DEBUG
+		Serial.println("BANG");
+		#endif
 		lastTime=millis();
 	}
 	if(laser.checkStatus()){
