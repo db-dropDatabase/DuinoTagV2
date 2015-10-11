@@ -40,8 +40,13 @@ void setup() {
 
 
 void loop() {
-	if (millis() - lastTime > 100) {
-		if (!laser.gunCommand(gShoot, 0)) laser.gunCommand(gReload, 0);
+	if (millis() - lastTime > 80) {
+		
+		if (!laser.gunCommand(gShoot, 0)) {
+			laser.gunCommand(gReload, 0);
+		}
+		
+		//playSound(pPew);
 #ifdef DEBUG
 		Serial.println("BANG");
 #endif

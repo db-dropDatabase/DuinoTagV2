@@ -13,7 +13,7 @@ using namespace std;
 volatile bool Sounds::playingSound;
 volatile int Sounds::currentFreq;
 volatile bool Sounds::paused;
-volatile soundProp Sounds::currentSound;
+volatile Sounds::soundProp Sounds::currentSound;
 
 //used to remove some compilier optimization
 //hopefully
@@ -171,20 +171,10 @@ I think
 
 //int micros(); //used as a temporary substitution for the arduino function
 bool initPin(int pinNum,uint8_t mode){
-	if(pinNum>13){
-		return false;
-	}
-	else{
-		pinMode(pinNum, mode);
-		return true;
-	}
+	pinMode(pinNum, mode);
+	return true;
 }
 
-void writePin(int pinNum, uint8_t mode){
-	if(pinNum>0 && pinNum<14){
-		digitalWrite(pinNum, mode);
-	}
-}
 //cpp
 bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	bool check=true;
@@ -275,64 +265,64 @@ bool Arduino::playLights(arduinoLights command){
 bool Arduino::lightCommand(const lightControl steps[15]){
 	switch(steps[currentStep]){
 		case allOff:
-		writePin(muzzlePin, LOW);
-		writePin(hitPin, LOW);
-		writePin(leftPin, LOW);
-		writePin(rightPin,LOW);
+		digitalWrite(muzzlePin, LOW);
+		digitalWrite(hitPin, LOW);
+		digitalWrite(leftPin, LOW);
+		digitalWrite(rightPin,LOW);
 		break;
 		case allOn:
-		writePin(muzzlePin, HIGH);
-		writePin(hitPin, HIGH);
-		writePin(leftPin, HIGH);
-		writePin(rightPin,HIGH);
+		digitalWrite(muzzlePin, HIGH);
+		digitalWrite(hitPin, HIGH);
+		digitalWrite(leftPin, HIGH);
+		digitalWrite(rightPin,HIGH);
 		break;
 		case muzzleOn:
 		//#ifdef DEBUG
 		//Serial.println("Muzzle on");
 		//#endif
-		writePin(muzzlePin, HIGH);
+		digitalWrite(muzzlePin, HIGH);
 		break;
 		case muzzleOff:
 		//#ifdef DEBUG
 		//Serial.println("Muzzle off");
 		//#endif
-		writePin(muzzlePin, LOW);
+		digitalWrite(muzzlePin, LOW);
 		break;
 		case hitOn:
 		//#ifdef DEBUG
 		//Serial.println("Hit LED on");
 		//#endif
-		writePin(hitPin, HIGH);
+		digitalWrite(hitPin, HIGH);
 		break;
 		case hitOff:
 		//#ifdef DEBUG
 		//Serial.println("Hit LED off");
 		//#endif
-		writePin(hitPin, LOW);
+		digitalWrite(hitPin, LOW);
 		break;
 		case rightOn:
 		//#ifdef DEBUG
 		//Serial.println("Right on");
 		//#endif
-		writePin(rightPin, HIGH);
+		digitalWrite(rightPin, HIGH);
 		break;
 		case rightOff:
 		//#ifdef DEBUG
 		//Serial.println("Right off");
 		//#endif
-		writePin(rightPin, LOW);
+		digitalWrite(rightPin, LOW);
 		break;
 		case leftOn:
 		//#ifdef DEBUG
 		//Serial.println("Left on");
 		//#endif
-		writePin(leftPin, HIGH);
+		digitalWrite(leftPin, HIGH);
 		break;
 		case leftOff:
 		//#ifdef DEBUG
 		//Serial.println("Left off");
 		//#endif
-		writePin(leftPin, LOW);
+		digitalWrite(leftPin, LOW);
 		break;
 		case Tdelay:
 		if(!delaying){
@@ -374,7 +364,7 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		*/ 
 		if(!pewOverride){
 			pewOverride=true;
-			Sounds::playSound(pHit);
+			Sounds::playSound(Sounds::pHit);
 			return false;
 		}
 		else if(Sounds::playingSound){
@@ -409,7 +399,7 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		*/
 		if(!pewOverride){
 			pewOverride=true;
-			Sounds::playSound(pDead);
+			Sounds::playSound(Sounds::pDead);
 			return false;
 		}
 		else if(Sounds::playingSound){
@@ -443,7 +433,7 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		*/
 		if(!pewOverride){
 			pewOverride=true;
-			Sounds::playSound(pStart);
+			Sounds::playSound(Sounds::pStart);
 			return false;
 		}
 		else if(Sounds::playingSound){
@@ -481,8 +471,6 @@ void Arduino::reset(){
 	delaying=false;
 	newHealth=false;
 	newAmmo=false;
-	currentPew=0;
-	pewCommand=false;
 	pewOverride=false;
 	idle=false;
 	for(int i=0; i<5; i++){
@@ -521,7 +509,7 @@ void Arduino::changeValues(double aHealth, double aAmmo, double	aArmor){
 }
 void Arduino::playPew(){
 	if(!pewOverride){
-		Sounds::playSound(pPew);
+		Sounds::playSound(Sounds::pPew);
 	}
 }
 
@@ -667,12 +655,13 @@ Arduino::Arduino(void){
 	reset();
 }
 
-void Sounds::reset(){
+volatile void Sounds::reset(){
 	currentFreq=0;
 	currentSound.escalating=false;
 	currentSound.start=0;
 	currentSound.end=0;
 	currentSound.interval=0;
+	currentSound.jump = 0;
 	playingSound=false;
 	paused=false;
 	FlexiTimer2::stop();
@@ -688,6 +677,7 @@ void Sounds::pause(){
 		currentSound.start=0;
 		currentSound.end=0;
 		currentSound.interval=0;
+		currentSound.jump = 0;
 		playingSound=false;
 		FlexiTimer2::stop();
 		noToneAC();
@@ -700,7 +690,8 @@ void Sounds::playSound(const soundProp sound){
 		currentSound.escalating=sound.escalating;
 		currentSound.start=sound.start;
 		currentSound.end=sound.end;
-		currentSound.interval=sound.interval; //ugh
+		currentSound.interval=sound.interval; 
+		currentSound.jump = sound.jump; //ugh
 		#ifdef DEBUG
 		Serial.println("Playing Sound!");
 		Serial.println(currentSound.start);
@@ -715,13 +706,13 @@ void Sounds::playSound(const soundProp sound){
 void Sounds::updateSound(void){ //technicly an ISR
 	toneAC(currentFreq);
 	if(!currentSound.escalating){
-		currentFreq-=currentSound.interval;
+		currentFreq-=currentSound.jump;
 		if(currentFreq<=currentSound.end){
 			reset();
 		}
 	}
 	else{
-		currentFreq+=currentSound.interval;
+		currentFreq+=currentSound.jump;
 		if(currentFreq>=currentSound.end){
 			reset();
 		}

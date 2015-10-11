@@ -16,28 +16,21 @@
 #define constDelay 1000
 #define sPacketLength 29
 const int frequency = 56;
-#define sendPin 3 //never used in code, but still important
-#define recievePin A4
-#define muzzlePin 2 //light pins below
-#define leftPin 5
-#define rightPin 6
+#define sendPin 5 //never used in code, but still important
+#define recievePin 16
+#define muzzlePin 15 //light pins below
+#define leftPin 8
+#define rightPin 7
 #define hitPin A0
-#define buzzerPin 10 //other pins, with buzzer both 9 and 10 are taken
-#define triggerPin 12
-#define neoPin 11
+#define buzzerPin 9 //other pins, with buzzer both 9 and 10 are taken
+#define triggerPin 14
+#define neoPin 4
 
 using namespace std;
 
 /*--MARIMOLE-DEF_BEGIN--*/
 void loop();
 void setup();
-//bool Suit::command(SuitCommmands command, int amount);
-//bool Lasergun::setupGun(myByte iPlayerID, myByte currentTeam, myByte iClipNum, myByte iClipSize);
-//bool Suit::setup(myByte iTeamID, myByte iPlayerID, myByte iClipNum, myByte iClipSize, Lasergun *gun);
-//void Arduino::pause(bool reset);
-//bool Arduino::lightCommand(const lightControl steps[15]);
-//bool Arduino::checkTrigger();
-//bool Arduino::playLights(arduinoLights command);
 class Arduino;
 class Bitshift;
 class Suit;
@@ -103,21 +96,6 @@ const lightControl gameOn[15] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay
 const lightControl dead[15] = {hitOn,playDead,hitOff,over};
 const lightControl gameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
 	//is this cool or what?!
-
-struct soundProp{
-	bool escalating; //playing sound up or down
-	unsigned int start;
-	unsigned int end;
-	unsigned int interval; //in micro seconds
-};
-
-//below are sound props. can be edited freely.
-//the sound is played by escalating or deescalating from start freq. to end freq. with a buzzer
-const soundProp pPew = {false, 1600, 400, 10}; //for ex. starts a 1600hz, goes down 1 each inturupt until 400hz
-const soundProp pHit = {false, 750, 200, 100};
-const soundProp pStart = {true, 50, 2000, 10};
-const soundProp pDead = {false, 1000, 10, 10};
-//yay!
 
 enum SuitCommmands{  //also includes message packet commands
 		cShot, //take damage
@@ -196,8 +174,6 @@ enum SuitCommmands{  //also includes message packet commands
 		bool idle;
 		bool paused;
 		bool delaying;
-		bool pewCommand;
-		int currentPew;
 		bool pewOverride;
 		bool newHealth;
 		bool newAmmo;
@@ -220,9 +196,25 @@ enum SuitCommmands{  //also includes message packet commands
 	//f that
 	namespace Sounds{  //updating lights semi-consistintly works, but it doesn't for sound.  This namespace will handle it all in an ISR which will be called every 100us or so
 		//is will also be pretty much handled by Arduino
+		struct soundProp {
+			bool escalating; //playing sound up or down
+			unsigned int start;
+			unsigned int end;
+			unsigned int interval; //in microseconds
+			unsigned int jump; //in hz
+		};
+
+		//below are sound props. can be edited freely.
+		//the sound is played by escalating or deescalating from start freq. to end freq. with a buzzer
+		const soundProp pPew = { false, 1600, 400, 1000, 50 }; //ex. starts a 1600hz, goes down 100hz every 100us until 400hz
+		const soundProp pHit = { false, 750, 200, 100, 10 };
+		const soundProp pStart = { true, 50, 2000, 10, 10 };
+		const soundProp pDead = { false, 1000, 10, 10, 1 };
+		//yay!
+
 		extern void playSound(const soundProp sound);
 		extern void updateSound(void); //called by timer 3
-		extern void reset();
+		extern volatile void reset();
 		extern void pause();
 		extern volatile int currentFreq;
 		extern volatile bool playingSound;
