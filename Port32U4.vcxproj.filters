@@ -62,5 +62,8 @@
     <ClInclude Include="Neopixel\Adafruit_NeoPixel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GameMode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
