@@ -496,7 +496,10 @@ void Arduino::playPew(){
 	if(!pewOverride){
 		Sounds::playSound(Sounds::pPew);
 	}
-	pinMode(muzzlePin, HIGH);
+#ifdef DEBUG
+	Serial.println("muzzle on!");
+#endif
+	digitalWrite(muzzlePin, HIGH);
 	lastPewTime = millis();
 }
 
@@ -598,7 +601,7 @@ bool Arduino::update(){
 		currentStep=0;
 	}
 	if (lastPewTime > 0) {
-		if (millis() - lastPewTime > constDelay) {
+		if (millis() - lastPewTime > constDelay/4) {
 			lastPewTime = 0;
 			digitalWrite(muzzlePin, LOW);
 		}
@@ -688,9 +691,8 @@ Bitshift& Bitshift::operator= (const unsigned int &x){
 	return *this;
 }
 
-bool& Bitshift::operator[] (unsigned int x){
-	bool ret = (store & (1<<x));
-	return ret;
+bool Bitshift::grab(unsigned int place) {
+	return store & (1 << place);
 }
 
 void Bitshift::flip(unsigned int place, bool value){
@@ -1033,22 +1035,22 @@ parsedPacket Suit::readPacket(packet packetYay){
 	#ifdef DEBUG
 	Serial.println("The packet is as follows: ");
 	for(int i=7; i>=0; i--){
-		Serial.print(packetYay.data1[i]);
+		Serial.print(packetYay.data1.grab(i));
 		Serial.print(", ");
 	}
 	Serial.println("");
 	Serial.println("Part 2: ");
 	for(int i=7; i>=0; i--){
-		Serial.print(packetYay.data2[i]);
+		Serial.print(packetYay.data2.grab(i));
 		Serial.print(", ");
 	}
 	Serial.println("");
 	#endif
 	parsedPacket superYay;
-	if(!packetYay.data1[7]){ //check very first (last?) bit for message type
+	if(!packetYay.data1.grab(7)){ //check very first (last?) bit for message type
 		//shot packet
 		//add stats here later
-		int tmpTeamID = 2*packetYay.data2[7] + packetYay.data2[6];
+		int tmpTeamID = 2*packetYay.data2.grab(7) + packetYay.data2.grab(6);
 		if(tmpTeamID == teamID){ //checks to see if shot by friend or foe, and if friendlyfire is on
 			//take damage, and if I make a stats machine record player I
 			#ifdef DEBUG
