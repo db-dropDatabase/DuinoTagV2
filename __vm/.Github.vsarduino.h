@@ -20,6 +20,7 @@
 #define USB_PID 0x9206
 #define USB_MANUFACTURER 
 #define __cplusplus
+#define __AVR__
 #define __inline__
 #define __asm__(x)
 #define __extension__

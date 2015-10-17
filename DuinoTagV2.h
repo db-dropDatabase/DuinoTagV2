@@ -42,7 +42,6 @@ double MHitDelay(myByte in);
 int milesHealth(myByte health);
 int milesRPM(myByte rpm);
 int milesDamage(myByte damageIn);
-bool initPin(int pinNum);
 int decodePulse(int pulseLength);
 int boolToInt(bool input[8]);
 void intToBool(unsigned int input, unsigned int start, unsigned int len, char * ray);
@@ -161,7 +160,7 @@ enum SuitCommmands{  //also includes message packet commands
 		bool playLights(arduinoLights command);
 		void pause();
 		void reset();
-		bool setup(int maxHealth, int maxAmmo, int maxArmor, myByte team); //initilizes pins, thats all
+		void setup(int maxHealth, int maxAmmo, int maxArmor, myByte team); //initilizes pins, thats all
 		bool update(); //used to not delay entire program if playing leds, just update when ready and change action
 		void changeValues(double aHealth, double aAmmo, double aArmor);
 		void playPew(); //pew needs to behave differently than other sounds, so yeah
@@ -179,6 +178,7 @@ enum SuitCommmands{  //also includes message packet commands
 		bool newAmmo;
 		int soundDelay;
 		long long int lastTime;
+		long int lastPewTime;
 		double aMaxHealth;
 		double healthDisp;
 		double aMaxAmmo;

@@ -170,29 +170,14 @@ I think
 */
 
 //int micros(); //used as a temporary substitution for the arduino function
-bool initPin(int pinNum,uint8_t mode){
-	pinMode(pinNum, mode);
-	return true;
-}
 
 //cpp
-bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
-	bool check=true;
-	if(!initPin(muzzlePin, OUTPUT)){
-		check=false;
-	}
-	if(!initPin(leftPin, OUTPUT)){
-		check=false;
-	}
-	if(!initPin(rightPin, OUTPUT)){
-		check=false;
-	}
-	if(!initPin(hitPin, OUTPUT)){
-		check=false;
-	}
-	if(!initPin(buzzerPin, OUTPUT)){
-		check=false;
-	}
+void Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
+	pinMode(muzzlePin, OUTPUT);
+	pinMode(leftPin, OUTPUT);
+	pinMode(rightPin, OUTPUT);
+	pinMode(hitPin, OUTPUT);
+	pinMode(buzzerPin, OUTPUT);
 	neopix = Adafruit_NeoPixel(8, neoPin, NEO_GRB + NEO_KHZ800); //change to 16 later
 	left = Adafruit_NeoPixel(8/*?*/, leftPin, NEO_GRB + NEO_KHZ800);
 	right = Adafruit_NeoPixel(8, rightPin, NEO_GRB + NEO_KHZ800);
@@ -237,7 +222,6 @@ bool Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	aMaxHealth=smaxHealth;
 	aMaxAmmo=smaxAmmo;
 	aMaxArmor=smaxArmor;
-	return check;
 	
 }
 void Arduino::playIdle(){
@@ -464,6 +448,7 @@ void Arduino::pause(){
 void Arduino::reset(){
 	currentStep=0;
 	lastTime=0;
+	lastPewTime = 0;
 	healthDisp=0;
 	ammoDisp=0;
 	armorDisp=0;
@@ -511,6 +496,8 @@ void Arduino::playPew(){
 	if(!pewOverride){
 		Sounds::playSound(Sounds::pPew);
 	}
+	pinMode(muzzlePin, HIGH);
+	lastPewTime = millis();
 }
 
 bool Arduino::update(){
@@ -610,39 +597,12 @@ bool Arduino::update(){
 		commandBuffer[4] = null;
 		currentStep=0;
 	}
-	/* testing new pew implementation
-	if(pewCommand){
-		// replacing with sounds namespace
-		switch(currentPew){
-			case 0:
-			//muzzleOn
-			digitalWrite(muzzlePin, HIGH);
-			currentPew=1400;
-			break;
-			case 600:
-			//muzzle off
+	if (lastPewTime > 0) {
+		if (millis() - lastPewTime > constDelay) {
+			lastPewTime = 0;
 			digitalWrite(muzzlePin, LOW);
-			if(!pewOverride){
-				noToneAC();
-			}
-			currentPew=0;
-			pewCommand=false;
-			break;
-			default:
-			//play sound
-			if(!pewOverride){
-				toneAC(currentPew,10);
-				currentPew--;
-			}
-			else{
-				currentPew--;
-			}
-			
-			break;
 		}
-		
 	}
-	*/
 	if(commandBuffer[0]==null){
 		return false;
 	}
