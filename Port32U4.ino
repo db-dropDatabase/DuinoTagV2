@@ -6,7 +6,7 @@ using namespace std;
 using namespace Sounds;
 
 Suit laser;
-IRrecv recver(4);  // I KNOW I SPELLED IT WRONG
+IRrecv recver(recievePin);  // I KNOW I SPELLED IT WRONG
 decode_results results;
 long int lastTime = 0;
 
@@ -40,9 +40,9 @@ void setup() {
 
 
 void loop() {
-	if (millis() - lastTime > 80) {
+	if (millis() - lastTime > 200) {
 		
-		if (!laser.gunCommand(gShoot, 0)) {
+		if (!laser.gunCommand(gShoot, 0) && !laser.isDead) {
 			laser.gunCommand(gReload, 0);
 		}
 		

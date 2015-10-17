@@ -13,17 +13,17 @@
 
 #define myByte unsigned int
 
-#define constDelay 1000
+#define constDelay 250
 #define sPacketLength 29
 const int frequency = 56;
 #define sendPin 5 //never used in code, but still important
-#define recievePin 16
-#define muzzlePin 15 //light pins below
-#define leftPin 8
+#define recievePin 15
+#define muzzlePin A1 //light pins below
+#define leftPin 6
 #define rightPin 7
-#define hitPin A0
+#define hitPin A3
 #define buzzerPin 9 //other pins, with buzzer both 9 and 10 are taken
-#define triggerPin 14
+#define triggerPin A2
 #define neoPin 4
 
 using namespace std;
@@ -50,7 +50,7 @@ void intToBool(unsigned int input, unsigned int start, unsigned int len, char * 
 class Bitshift{
 		public:
 		unsigned int store;
-		bool& operator[] (unsigned int x);
+		bool grab(unsigned int place);
 		Bitshift& operator= (const unsigned int &x);
 		void flip(unsigned int place, bool value);
 		Bitshift();
@@ -206,7 +206,7 @@ enum SuitCommmands{  //also includes message packet commands
 
 		//below are sound props. can be edited freely.
 		//the sound is played by escalating or deescalating from start freq. to end freq. with a buzzer
-		const soundProp pPew = { false, 1600, 400, 1000, 50 }; //ex. starts a 1600hz, goes down 100hz every 100us until 400hz
+		const soundProp pPew = { false, 1600, 400, 1000, 50 }; //ex. starts a 1600hz, goes down 50hz every 1000us until 400hz
 		const soundProp pHit = { false, 750, 200, 100, 10 };
 		const soundProp pStart = { true, 50, 2000, 10, 10 };
 		const soundProp pDead = { false, 1000, 10, 10, 1 };
