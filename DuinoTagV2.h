@@ -11,22 +11,17 @@
 
 #include <FlexiTimer\FlexiTimer2.h>
 
+#include <GameMode.h>
+
 #define myByte unsigned int
 
-#define constDelay 250
-#define sPacketLength 29
+#define sPacketLength 29 
 const int frequency = 56;
-#define sendPin 5 //never used in code, but still important
-#define recievePin 15
-#define muzzlePin A1 //light pins below
-#define leftPin 6
-#define rightPin 7
-#define hitPin A3
-#define buzzerPin 9 //other pins, with buzzer both 9 and 10 are taken
-#define triggerPin A2
-#define neoPin 4
+#define IR_BURST_UPPER 60 //numbers to turn raw lengths of IR into signal, probably don't mess with them
+#define IR_BURST_HEADER 40
+#define IR_BURST_ONE 20
+#define IR_BURST_ZERO 8
 
-using namespace std;
 
 /*--MARIMOLE-DEF_BEGIN--*/
 void loop();
@@ -58,7 +53,7 @@ class Bitshift{
 // :(
 
 struct packet{
-	Bitshift data1;//1 bit for packet type, 7 bits for playerID 
+	Bitshift data1;  //1 bit for packet type, 7 bits for playerID 
 	Bitshift data2;  //6 or 8 bits for team and damage or message data
 };
 
@@ -149,11 +144,6 @@ enum SuitCommmands{  //also includes message packet commands
 		myByte clipNum;
 	};
 	
-	const gunProfile machineGun = {3, 7, 4, 50, 0xCA}; //conforms to the f ing milestag protocol
-	const gunProfile pistol = {5, 0, 2, 8, 0xCA}; //technicly should be semi-auto, but can't add that here
-	const gunProfile sniper = {12, 0, 5, 4, 0xCA};
-	const gunProfile shotgun = {6, 0, 4, 8, 0xCA};
-	
 	class Arduino{ //for playing sounds and lights
 		public:
 		//functions
@@ -230,7 +220,7 @@ enum SuitCommmands{  //also includes message packet commands
 		void reset();
 		Stats();
 		private:
-		uint_least8_t hitCount[127]; //I got hit x times by x!
+		uint_least8_t hitCount[127]; //I got hit x times by y!
 		unsigned int deathCount;
 		unsigned int shotCount;
 		unsigned int reloadCount;
@@ -239,58 +229,39 @@ enum SuitCommmands{  //also includes message packet commands
 	class Suit{
 		public:
 		//in order as shown in table, but only if pertains to suits
+		myByte playerID;
 		myByte teamID;
-		myByte hitLEDTimeout; //seconds
 		myByte startHealth; //value reference in code.cpp
-		myByte respawnTime; //in tens of seconds, not used
+		myByte respawnTime; //in seconds
 		int armor; 
 		//bytes below are all part of a gamsettings thing, so I split them up, 0x00 is false and 0x01 is true
-		bool friendlyFire;
-		bool zombieMode;
-		bool medic;
 		//part 2
 		bool respawns;  //enable respawns
-		bool gamemode; //enable gamemode in general
 		//normal bytes
-		myByte hitDelay;//value reference in code.cpp
-		myByte startDelay; //seconds
-		myByte deathDelay; //seconds
-		myByte timeLimit; //minutes
-		myByte maxRespawn;
 		//values and functions not included in table
-		bool respawnLimit; //enables or disables respawn limit
-		myByte playerID;
 		int currentHealth;
 		int currentArmor;
 		unsigned int numRespawns; //if respawn limit is set
-		unsigned int respawnTimeLeft;
 		bool isDead;
 		Suit();
 		void setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe); //sets everything to defaults for a quick game, except for shown varibles
 		//will add score and cloning packets later
 		bool action(packet packetYay); //put in packet, out goes lasers!
 		void sCommand(SuitCommmands command, int amount);
+#if IR_SETUP==1
 		void waitForSetup(IRrecv * showMe); //damn you FTC
-		
+#endif
 		Stats stat;
 		
 		//test merging of classes
 		//gun stuff
-		bool overheat;  //if infinite clips, after awhile the gun will stop shooting
-		myByte fireType;  //0x00 semi auto, 0x01 burst, 0x02 full auto
-		myByte burstRounds; //num of rounds in burst mode
-		bool IRPower; //0x00 low, 0x01 high :/
-		//myByte IRRange; //not entirely sure how to regulate this, so unused for now
-		myByte gunSettings; //0x01 muzzle flash on, 0x02 Overheat on, 0x03 for both, not implemented
-		//bytes below are all part of a gamsettings thing, so I split them up, 0x00 is false and 0x01 is true
-		//custom, the way they did this in the protocol is weird
-		//bytes below are in the part 2 of the gamesettings thing
-		bool ammoReset;  //restock ammo on spawn
 		//functions or variables not included in table
 		unsigned int currentReload;
 		unsigned int shotPacket[30]; //for IRsend library, initilized in setuppacket
 		bool gunCommand(GunCommands, int amount);
+#if CUSTOM_WEAPONS == true
 		void switchGun(gunProfile newGun);
+#endif
 		Arduino display;
 		IRrecv * recv;
 		bool checkStatus();

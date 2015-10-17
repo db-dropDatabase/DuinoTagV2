@@ -7,8 +7,6 @@
 #define DEBUG
 #endif
 
-using namespace std;
-
 //Sounds varibles that have to be declared
 volatile bool Sounds::playingSound;
 volatile int Sounds::currentFreq;
@@ -130,19 +128,19 @@ double MHitDelay(myByte in){
 }
 //unrealted
 int decodePulse(int pulseLength){
-	if(pulseLength > 60){
+	if(pulseLength > IR_BURST_UPPER){
 		#ifdef DEBUG
 		Serial.println("Recieved too long pulse!");
 		#endif //debug
 		return -1;
 	}
-	else if(pulseLength > 40){
+	else if(pulseLength > IR_BURST_HEADER){
 		return -2;
 	}
-	else if(pulseLength > 20){
+	else if(pulseLength > IR_BURST_ONE){
 		return 1;
 	}
-	else if(pulseLength > 8){
+	else if(pulseLength > IR_BURST_ZERO){
 		return 0;
 	}
 	else{
@@ -261,51 +259,27 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		digitalWrite(rightPin,HIGH);
 		break;
 		case muzzleOn:
-		//#ifdef DEBUG
-		//Serial.println("Muzzle on");
-		//#endif
 		digitalWrite(muzzlePin, HIGH);
 		break;
 		case muzzleOff:
-		//#ifdef DEBUG
-		//Serial.println("Muzzle off");
-		//#endif
 		digitalWrite(muzzlePin, LOW);
 		break;
 		case hitOn:
-		//#ifdef DEBUG
-		//Serial.println("Hit LED on");
-		//#endif
 		digitalWrite(hitPin, HIGH);
 		break;
 		case hitOff:
-		//#ifdef DEBUG
-		//Serial.println("Hit LED off");
-		//#endif
 		digitalWrite(hitPin, LOW);
 		break;
 		case rightOn:
-		//#ifdef DEBUG
-		//Serial.println("Right on");
-		//#endif
 		digitalWrite(rightPin, HIGH);
 		break;
 		case rightOff:
-		//#ifdef DEBUG
-		//Serial.println("Right off");
-		//#endif
 		digitalWrite(rightPin, LOW);
 		break;
 		case leftOn:
-		//#ifdef DEBUG
-		//Serial.println("Left on");
-		//#endif
 		digitalWrite(leftPin, HIGH);
 		break;
 		case leftOff:
-		//#ifdef DEBUG
-		//Serial.println("Left off");
-		//#endif
 		digitalWrite(leftPin, LOW);
 		break;
 		case Tdelay:
@@ -327,25 +301,6 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		}
 		break;
 		case playHit:
-		/* test new sound implementation
-		if(!pewOverride){
-			noToneAC();
-			soundDelay=750;
-			pewOverride=true;
-			return false;
-		}
-		else if(soundDelay > 200){
-			toneAC(soundDelay,10);
-			soundDelay-=1;
-			delayMicroseconds(10);
-			return false;
-		}
-		else{
-			noToneAC();
-			soundDelay=0;
-			pewOverride=false;
-		}
-		*/ 
 		if(!pewOverride){
 			pewOverride=true;
 			Sounds::playSound(Sounds::pHit);
@@ -359,28 +314,6 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		}
 		break;
 		case playDead:
-		/* test implementation of new sound system
-		if(!pewOverride){
-			#ifdef DEBUG
-			Serial.println("DEAD!");
-			#endif
-			noToneAC();
-			soundDelay=1000;
-			pewOverride=true;
-			return false;
-		}
-		else if(soundDelay > 10){
-			toneAC(soundDelay,10);
-			soundDelay--;
-			delay(1);
-			return false;
-		}
-		else{
-			noToneAC();
-			soundDelay=0;
-			pewOverride=false;
-		}
-		*/
 		if(!pewOverride){
 			pewOverride=true;
 			Sounds::playSound(Sounds::pDead);
@@ -394,27 +327,6 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		}
 		break;
 		case playGameOn:
-		/* test implementation of new sound system
-		if(!pewOverride){
-			#ifdef DEBUG
-			Serial.println("PEW");
-			#endif
-			noToneAC();
-			soundDelay=50;
-			pewOverride=true;
-			return false;
-		}
-		else if(soundDelay < 2000){
-			toneAC(soundDelay,10);
-			soundDelay+=1;
-			return false;
-		}
-		else{
-			soundDelay=0;
-			noToneAC();
-			pewOverride=false;
-		}
-		*/
 		if(!pewOverride){
 			pewOverride=true;
 			Sounds::playSound(Sounds::pStart);
@@ -496,9 +408,6 @@ void Arduino::playPew(){
 	if(!pewOverride){
 		Sounds::playSound(Sounds::pPew);
 	}
-#ifdef DEBUG
-	Serial.println("muzzle on!");
-#endif
 	digitalWrite(muzzlePin, HIGH);
 	lastPewTime = millis();
 }
@@ -654,7 +563,7 @@ void Sounds::playSound(const soundProp sound){
 		currentSound.start=sound.start;
 		currentSound.end=sound.end;
 		currentSound.interval=sound.interval; 
-		currentSound.jump = sound.jump; //ugh
+		currentSound.jump = sound.jump; 
 		#ifdef DEBUG
 		Serial.println("Playing Sound!");
 		Serial.println(currentSound.start);
@@ -721,52 +630,7 @@ milestag packets are constructed as below:
 2400us header, 600us pause, then 1200us transmit for 1 and 600us transmit for 0,etc
 shot packet consists of header+one bit for packet type (0 for shot packet), 7 more bits for player id, 2 bits for team id, then 4 bits for damage
 message packet consists of one bit for packet type, 7 more bits for message ID, 8 more bits for data, then 8 more bits for EOF
-
-below is a table of cloning data, which allows for one gun to effectively transmit it's settings to another gun
-this will be the format for the lasergun class, without armor, heath, or other suit references
-
-myByte number Description of data
-4 Reserved
-5 Reserved
-6 Reserved
-7 Team ID - See section 2.3.1
-8 Reserved
-9 Clips added by picking up an ammo box
-10 Health added by picking up a medic box
-11 Reserved (0x03 for 5.41)
-12 Hit LED timeout in seconds
-13 Sound set - See section 2.3.2
-14 Overheat limit in rounds/min
-15 Reserved 16 Reserved
-17 Damage per shot - See section 2.3.3
-18 Clip size - 0xFF is unlimited
-19 Number of clips - 0xCA is unlimited
-20 Fire selector - See 2.3.4
-21 Number of rounds for burst mode
-22 Cyclic RPM - See 2.3.5
-23 Reload delay in seconds
-24 IR power - See 2.3.6
-25 IR range - See 2.3.7
-26 Tagger on/o settings - See 2.3.8
-27 Respawn health - See 2.3.9 28 Reserved
-29 Respawn delay in tens of seconds
-30 Armour value
-31 Game on/o settings 1/2 - See 2.3.10
-32 Game on/o settings 2/2 - See 2.3.11
-33 Hit delay - See 2.3.12
-34 Start delay in seconds
-35 Death delay in seconds
-36 Time limit in minutes
-37 Maximum respawns
-38 Reserved (0xFF in 5.41)
-39 Checksum - See 2.3.13
-
-copypastad from document on milestag
-suit will control things such as hits, health, respawns, flag, etc.
-lasergun will shoot and control ammo, reload, etc.
 */
-
-
 
 //laser gun reference/triggers
 //cpp
@@ -826,6 +690,7 @@ void Suit::setUpPacket(){
 	}
 }
 
+#if IR_SETUP==1
 void Suit::waitForSetup(IRrecv * showMe){
 	bool raw[61];
 	bool check=false;
@@ -968,6 +833,7 @@ void Suit::waitForSetup(IRrecv * showMe){
 	}
 	
 }
+#endif
 
 void Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 	//set all values to defaults except for the modifiers
@@ -987,44 +853,26 @@ void Suit::setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe){
 }
 
 Suit::Suit(void){
-	//YAY
-	hitLEDTimeout = 0x04;
-	startHealth = 0x24; //100
-	respawnTime = 0x03; //30 secs
-	armor = 50; //50
-	friendlyFire = 0;
-	zombieMode = 0;
-	medic = 0;
+	//YAYs
+	startHealth = HEALTH; //100
+	respawnTime = RESPAWN_TIME; //3 secs
+	armor = ARMOR; //50
 	respawns = false;
-	gamemode = 0;
-	hitDelay = 0x00;
-	startDelay = 0x3c; //60 sec
-	deathDelay = 0x00;
-	timeLimit = 0x1e; //30 min
-	maxRespawn = 0x00;
-	respawnLimit = 0;
 	numRespawns=0;
 	isDead=true;
 	currentHealth=0;
 	currentArmor=0;
 	//lasergun setup
 	
-	gunValues.clipNum = 0xCA;
-	gunValues.clipSize = 50; 
+	gunValues.clipNum = CLIP_NUM;
+	gunValues.clipSize = CLIP_SIZE; 
 	//defaults
-	overheat=0;
-	gunValues.damage=0x03;
-	fireType=0x02; //full auto;
-	burstRounds=0x00;
-	gunValues.rpm=0x0a; 
-	gunValues.reload=4;
-	IRPower=0;
-	gunSettings=0x01; //muzzle flash on, no overheat
-	medic=0;
-	ammoReset=1;
+	gunValues.damage=DAMAGE;
+	gunValues.rpm=RPM; 
+	gunValues.reload=RELOAD;
 	currentDelay=0;
 	tmpTime=0;
-	currentAmmo=0xCA;
+	currentAmmo=CLIP_NUM;
 	rpmDelay=1000/(milesRPM(gunValues.rpm)/60);
 	currentProfile = gunValues;
 	currentClip = gunValues.clipSize;
@@ -1056,16 +904,15 @@ parsedPacket Suit::readPacket(packet packetYay){
 			#ifdef DEBUG
 			Serial.println("teamID is the same as shooter teamid");
 			#endif
-			if(friendlyFire){
-				packetYay.data2.flip(6,0);
-				packetYay.data2.flip(7,0); //wipe the teamID so I can grab the damage
-				superYay.amount= milesDamage(packetYay.data2.store/4); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
-				superYay.whatToDo=cShot;
-				stat.addValue(sHit, packetYay.data1.store-128);
-			}
-			else{
-				superYay.whatToDo=cNull;
-			}
+#if FRIENDLY_FIRE == 1
+			packetYay.data2.flip(6,0);
+			packetYay.data2.flip(7,0); //wipe the teamID so I can grab the damage
+			superYay.amount= milesDamage(packetYay.data2.store/4); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
+			superYay.whatToDo=cShot;
+			stat.addValue(sHit, packetYay.data1.store-128);
+#else
+			superYay.whatToDo=cNull;
+#endif
 		}
 		else{
 			packetYay.data2.flip(6,0);
@@ -1165,6 +1012,26 @@ parsedPacket Suit::readPacket(packet packetYay){
 			//sytstem data.  This includes cloning and score transfer
 			//don't want to tackle at the moment do later
 			break;
+			case 136:
+				superYay.whatToDo = cAddAmmo;
+				superYay.amount = amountOrCommand;
+				break;
+			case 137:
+#if MEDIC_ALLOWED==1
+				superYay.whatToDo = cAddHealth;
+				superYay.amount = amountOrCommand;
+				break;
+#else
+				superYay.whatToDo = cNull;
+				superYay.amount = 0;
+				break;
+#endif
+			case 138:
+				//objective
+#if ON_OBJECTIVE_START == 1
+				onObjStart();
+#endif
+				break;	
 			//the rest are clips, health, and flag pickup
 			//will do later
 			default:
@@ -1205,7 +1072,9 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		{
 			//play hit animation, subtract health, pause?
 			if(!isDead){
-				delayMicroseconds(MHitDelay(hitDelay)); //hit delay function turns hit delay myByte into seconds
+#if HIT_DELAY > 0
+				delayMicroseconds(MHitDelay(HIT_DELAY)); //hit delay function turns hit delay myByte into seconds
+#endif
 				if(currentArmor <= 0){
 					currentHealth-= amount;
 				}
@@ -1224,6 +1093,9 @@ void Suit::sCommand(SuitCommmands command, int amount){
 				Serial.print(currentArmor);
 				Serial.println("");
 				#endif
+#if ON_HIT == true
+				onHit();
+#endif
 				display.playLights(pLightsHit);
 			}
 			#ifdef DEBUG
@@ -1236,13 +1108,13 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		case cAddHealth:
 		{
 			currentHealth+=amount;
-			display.playLights(pLightsGameOn);
+			//display.playLights(pLightsGameOn);
 		}
 		break;
 		case cAddAmmo:
 		{
 			gunCommand(gAddAmmo, amount);
-			display.playLights(pLightsGameOn);
+			//display.playLights(pLightsGameOn);
 		}
 		break;
 		case cKill:
@@ -1251,10 +1123,13 @@ void Suit::sCommand(SuitCommmands command, int amount){
 			stat.addValue(sDeath,1);
 			gunCommand(gStop,0);
 			display.playLights(pLightsDead);
-		while(display.update()){}
+			while(display.update()){}
 			display.playIdle();
 			display.changeValues(0,0,0);
 			display.update(); //no health left!
+#if ON_DEATH == true
+			onDeath();
+#endif
 		}
 		break;
 		case cPause:
@@ -1266,15 +1141,20 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		{
 			if(!respawns){
 				//varibles! yay!
-				delayMicroseconds(startDelay);
-				respawns=true;
+#if START_DELAY > 0
+				delay(START_DELAY);
+#endif
+				respawns=RESPAWN_ALLOWED;
 				currentHealth=milesHealth(startHealth);
 				currentArmor=armor;
 				isDead=false;
 				gunCommand(gFullAmmo,0);
 				display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
 				display.playLights(pLightsGameOn);
-			while(display.update()){}
+				while(display.update()){}
+#if ON_GAME_START == true
+				onGameStart();
+#endif
 				#ifdef DEBUG
 				Serial.println("Game started!");
 				#endif
@@ -1290,32 +1170,54 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cRespawn:
 		{
-			if(respawns&&isDead){
-				if(respawnLimit){
-					numRespawns++;
+#if RESPAWN_ALLOWED == true
+			if (isDead) {
+#if RESPAWN_LIMITED == true
+				numRespawns++;
+				if (numRespawns > MAX_RESPAWN) {
+#ifdef DEBUG
+					Serial.println("Respawn limit exceeded!");
+#endif
+					return;
 				}
-				if(numRespawns <= maxRespawn){
-					#ifdef DEBUG
-					Serial.println("Respawn!");
-					#endif
-					isDead=false;
-					currentHealth=milesHealth(startHealth);
-					currentArmor=armor;
-					gunCommand(gFullAmmo,0);
-					display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
-					display.playLights(pLightsGameOn);
-				}
+#endif
+#ifdef DEBUG
+				Serial.println("Respawn!");
+#endif
+#if RESPAWN_TIME > 0
+				long int timeHold = millis();
+				while (millis() - timeHold < respawnTime * 1000) checkStatus();
+#endif
+				isDead = false;
+				currentHealth = milesHealth(startHealth);
+				currentArmor = armor;
+#if AMMO_RESTOCK == true
+				gunCommand(gFullAmmo, 0);
+#endif
+				display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
+#if ON_RESPAWN == true
+				onRespawn();
+#endif
+				display.playLights(pLightsGameOn);
 			}
+#else
+#ifdef DEBUG
+			Serial.println("Respawns aren't allowed!");
+#endif
+#endif
 		}
 		break;
 		case cINewGame:
 		{
-			respawns=true;
+			respawns=RESPAWN_ALLOWED;
 			currentHealth=milesHealth(startHealth);
 			currentArmor=armor;
 			isDead=false;
 			gunCommand(gFullAmmo,0);
 			display.reset();
+#if ON_GAME_START == true
+			onGameStart();
+#endif
 			display.playLights(pLightsGameOn);
 		}
 		break;
@@ -1329,7 +1231,10 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		{
 			gunCommand(gStop,0);
 			isDead=true;
-			respawns=false;
+			respawns = false;
+#if ON_GAME_END == true
+			onGameEnd();
+#endif
 			display.playLights(pLightsGameOver);
 		}
 		break;
@@ -1343,6 +1248,9 @@ void Suit::sCommand(SuitCommmands command, int amount){
 			isDead=true;
 			stat.addValue(sDeath,1);
 			gunCommand(gStop,0);
+#if ON_DEATH == true
+			onDeath();
+#endif
 			display.playLights(pLightsDead);
 		}
 		break;
@@ -1365,7 +1273,8 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cClearScores:
 		{
-			//not implemented
+			stat.reset();
+			display.playLights(pLightsHit);
 		}
 		break;
 		case cTestSensors:
@@ -1435,6 +1344,9 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				currentDelay=rpmDelay;
 				stat.addValue(sShot,1);
 				display.playPew();
+#if ON_SHOOT == true
+				onShoot();
+#endif
 				return true;
 			}
 			else{
@@ -1466,6 +1378,9 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				currentAmmo--;
 			}
 			if(currentAmmo > 0&&!isDead){
+#if ON_RELOAD_START == true
+				onReloadStart();
+#endif
 				currentReload=currentProfile.reload*10;
 				#ifdef DEBUG
 				Serial.println("RELOADING!");
@@ -1488,6 +1403,9 @@ bool Suit::gunCommand(GunCommands command, int amount){
 					checkStatus();
 				}
 				currentClip=currentProfile.clipSize;
+#if ON_RELOAD_END == true
+				onReloadEnd();
+#endif
 				stat.addValue(sReload,1);
 				return true;
 			}
@@ -1525,6 +1443,7 @@ bool Suit::gunCommand(GunCommands command, int amount){
 	}
 }
 
+#if CUSTOM_WEAPONS == true
 void Suit::switchGun(gunProfile newGun){
 	currentProfile=newGun;
 	currentClip = currentProfile.clipSize;
@@ -1537,6 +1456,7 @@ void Suit::switchGun(gunProfile newGun){
 	rpmDelay=1000/(milesRPM(currentProfile.rpm)/60);
 	setUpPacket();
 }
+#endif
 
 bool Suit::checkStatus() { //this function will return is the user is dead, but will also check to see if any packets are ready for processing, and if so, proccess them and take apropriete action
 	decode_results results;
@@ -1546,7 +1466,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		outPacket.data2=0;
 		int counter=15;
 		int i=0;
-		while((results.rawbuf[i]<40||results.rawbuf[i]>60)&&i<results.rawlen){
+		while((results.rawbuf[i]<IR_BURST_HEADER||results.rawbuf[i]>IR_BURST_UPPER)&&i<results.rawlen){
 			i++;
 		}
 		#ifdef VERBOSE_DEBUG
@@ -1637,6 +1557,10 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		recv->resume();
 	}
 	if(currentHealth<1 && !isDead){
+#if DEATH_DELAY > 0
+		long int timeHold = millis();
+		while (millis() - timeHold > DEATH_DELAY * 1000) display.update();
+#endif
 		display.playLights(pLightsDead);
 		display.changeValues(0,0,0);
 		while(display.update()){}
@@ -1644,6 +1568,9 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		delay(255);
 		stat.addValue(sDeath,1);
 		isDead=true;
+#if ON_DEATH == true
+		onDeath();
+#endif
 	}
 	if(currentClip>0){ //reload function will handle it
 		display.changeValues(currentHealth,currentClip,currentArmor);

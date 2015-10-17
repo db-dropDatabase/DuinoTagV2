@@ -94,6 +94,8 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <DuinoTagV2.h>
 #include <FlexiTimer2.cpp>
 #include <FlexiTimer2.h>
+#include <GameMode.cpp>
+#include <GameMode.h>
 #include <IRremote.cpp>
 #include <IRremote.h>
 #include <IRremoteInt.h>

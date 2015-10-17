@@ -2,7 +2,6 @@
 #define DEBUG
 #include <DuinoTagV2.h>
 
-using namespace std;
 using namespace Sounds;
 
 Suit laser;
@@ -19,13 +18,17 @@ void setup() {
 	recver.enableIRIn();
 #ifdef DEBUG
 	Serial.println("IR initilization done");
+#endif
+#if IR_SETUP == 1
+#ifdef DEBUG
 	Serial.println("Entering setup mode");
 #endif
-	//laser.waitForSetup(&recver);
+	laser.waitForSetup(&recver);
+#else
+	laser.setup(TEAM, PLAYER_ID, &recver);
+#endif
 	//pinMode(triggerPin, INPUT_PULLUP);
 	pinMode(13, OUTPUT); //used as game indicator during setup
-	laser.setup(0x02, 0x10, &recver);
-	//laser.startHealth=0x24;
 #ifdef DEBUG
 	Serial.println("Suit setup done");
 #endif
@@ -36,6 +39,9 @@ void setup() {
 	delay(5000);
 	digitalWrite(13, LOW);
 	laser.sCommand(cStartGame, 0);
+#if CUSTOM_WEAPONS == true
+	laser.switchGun(DEFAULT_GUN);
+#endif
 }
 
 
