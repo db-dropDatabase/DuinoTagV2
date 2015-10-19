@@ -211,7 +211,7 @@ enum SuitCommmands{  //also includes message packet commands
 		extern volatile bool paused;
 		extern volatile soundProp currentSound;
 	}
-	
+#if USE_STATS == true
 	class Stats{
 		public:
 		int	calculate(statCommand command);
@@ -225,7 +225,7 @@ enum SuitCommmands{  //also includes message packet commands
 		unsigned int shotCount;
 		unsigned int reloadCount;
 	};
-	
+#endif
 	class Suit{
 		public:
 		//in order as shown in table, but only if pertains to suits
@@ -251,7 +251,9 @@ enum SuitCommmands{  //also includes message packet commands
 #if IR_SETUP==1
 		void waitForSetup(IRrecv * showMe); //damn you FTC
 #endif
+#if USE_STATS == true
 		Stats stat;
+#endif
 		
 		//test merging of classes
 		//gun stuff
@@ -277,6 +279,41 @@ enum SuitCommmands{  //also includes message packet commands
 		
 		parsedPacket readPacket(packet packetYay);
 		IRsend irsend;
+
+		//custom gamemode funcs.
+#if ON_SHOOT == true
+		void onShoot();
+#endif
+#if ON_HIT == true
+		void onHit();
+#endif
+#if ON_RELOAD_START == true
+		void onReloadStart();
+#endif
+#if ON_RELOAD_END == true
+		void onReloadEnd();
+#endif
+#if ON_DEATH == true
+		void onDeath();
+#endif
+#if ON_RESPAWN == true
+		void onRespawn();
+#endif
+#if ON_OBJECTIVE_START== true
+		void onObjStart(int progress);
+#endif
+#if ON_OBJECTIVE_FINISH == true
+		void onObjFinish(int progress);
+#endif
+#if ON_GAME_START == true
+		void onGameStart();
+#endif
+#if ON_GAME_END == true
+		void onGameEnd();
+#endif
+#if ON_CUSTOM_EVENT == true
+		void onCustomEvent();
+#endif
 	};
 	
 	#endif

@@ -176,7 +176,7 @@ void Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	pinMode(rightPin, OUTPUT);
 	pinMode(hitPin, OUTPUT);
 	pinMode(buzzerPin, OUTPUT);
-	neopix = Adafruit_NeoPixel(8, neoPin, NEO_GRB + NEO_KHZ800); //change to 16 later
+	neopix = Adafruit_NeoPixel(16, neoPin, NEO_GRB + NEO_KHZ800); 
 	left = Adafruit_NeoPixel(8/*?*/, leftPin, NEO_GRB + NEO_KHZ800);
 	right = Adafruit_NeoPixel(8, rightPin, NEO_GRB + NEO_KHZ800);
 	
@@ -445,7 +445,6 @@ bool Arduino::update(){
 		newHealth=false;
 		neopix.show();
 	}
-	/* need to attach all neopixels before I can use this code do later
 	if(newAmmo){
 		#ifdef DEBUG
 		Serial.println("Updating ammo!");
@@ -461,7 +460,6 @@ bool Arduino::update(){
 		newAmmo=false;
 		neopix.show();
 	}
-	*/
 	//check for delay
 	if(paused){
 		if(idle && millis()-lastTime>500){
@@ -900,16 +898,18 @@ parsedPacket Suit::readPacket(packet packetYay){
 		//add stats here later
 		int tmpTeamID = 2*packetYay.data2.grab(7) + packetYay.data2.grab(6);
 		if(tmpTeamID == teamID){ //checks to see if shot by friend or foe, and if friendlyfire is on
-			//take damage, and if I make a stats machine record player I
+			//take damage, and if I make a stats machine record player Id
 			#ifdef DEBUG
 			Serial.println("teamID is the same as shooter teamid");
 			#endif
-#if FRIENDLY_FIRE == 1
+#if FRIENDLY_FIRE == true
 			packetYay.data2.flip(6,0);
 			packetYay.data2.flip(7,0); //wipe the teamID so I can grab the damage
 			superYay.amount= milesDamage(packetYay.data2.store/4); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
 			superYay.whatToDo=cShot;
+#if USE_STATS == true
 			stat.addValue(sHit, packetYay.data1.store-128);
+#endif
 #else
 			superYay.whatToDo=cNull;
 #endif
@@ -1029,7 +1029,14 @@ parsedPacket Suit::readPacket(packet packetYay){
 			case 138:
 				//objective
 #if ON_OBJECTIVE_START == 1
-				onObjStart();
+				if (!hasObjective) {
+					onObjStart();
+				}
+#endif
+#if ON_OBJECTIVE_FINISH == true
+				if (amountOrCommand > 0) {
+					onObjFinish(amountOrCommand);
+				}
 #endif
 				break;	
 			//the rest are clips, health, and flag pickup
@@ -1120,7 +1127,9 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		case cKill:
 		{
 			isDead=true;
+#if USE_STATS == true
 			stat.addValue(sDeath,1);
+#endif
 			gunCommand(gStop,0);
 			display.playLights(pLightsDead);
 			while(display.update()){}
@@ -1246,7 +1255,9 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		case cExplodePlayer:
 		{
 			isDead=true;
+#if USE_STATS == true
 			stat.addValue(sDeath,1);
+#endif
 			gunCommand(gStop,0);
 #if ON_DEATH == true
 			onDeath();
@@ -1273,8 +1284,10 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cClearScores:
 		{
+#if USE_STATS == true
 			stat.reset();
 			display.playLights(pLightsHit);
+#endif
 		}
 		break;
 		case cTestSensors:
@@ -1342,7 +1355,9 @@ bool Suit::gunCommand(GunCommands command, int amount){
 				Serial.println(currentProfile.rpm);
 				#endif
 				currentDelay=rpmDelay;
+#if USE_STATS == true
 				stat.addValue(sShot,1);
+#endif
 				display.playPew();
 #if ON_SHOOT == true
 				onShoot();
@@ -1406,7 +1421,9 @@ bool Suit::gunCommand(GunCommands command, int amount){
 #if ON_RELOAD_END == true
 				onReloadEnd();
 #endif
+#if USE_STATS == true
 				stat.addValue(sReload,1);
+#endif
 				return true;
 			}
 			else{
@@ -1531,7 +1548,9 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 				#endif
 				if(currentHealth<1 && !isDead){
 					isDead=true;
+#if USE_STATS == true
 					stat.addValue(sDeath,1);
+#endif
 					display.playLights(pLightsDead);
 				}
 				recv->enableIRIn();
@@ -1566,7 +1585,9 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		while(display.update()){}
 		display.playIdle();
 		delay(255);
+#if USE_STATS == true
 		stat.addValue(sDeath,1);
+#endif
 		isDead=true;
 #if ON_DEATH == true
 		onDeath();
@@ -1579,6 +1600,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	return isDead;
 }
 
+#if USE_STATS == true
 //Stats machine
 Stats::Stats(){
 	reset();
@@ -1634,5 +1656,6 @@ void Stats::addValue(statCommand command, int input){
 		break;
 	}
 }
+#endif
 
 #endif //guard

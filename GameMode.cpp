@@ -3,74 +3,72 @@
 
 #include <GameMode.h>
 
-//now to define what actually happens in the functions
+#include <DuinoTagV2.h>
+//below are the functions
+//they run as events just before lights are played on the gun, with the exception of death
+//which runs after the lights are finished
+
 #if ON_SHOOT == true
-	void onShoot() {
+	void Suit::onShoot() {
 
 	}
 #endif
 
 #if ON_HIT == true
-	void onHit() {
+	void Suit::onHit() {
 
 	}
 #endif
 
 #if ON_RELOAD_START == true
-	void onReloadStart() {
+	void Suit::onReloadStart() {
 
 	}
 #endif
 
 #if ON_RELOAD_END == true
-	void onReloadEnd() {
+	void Suit::onReloadEnd() {
 
 	}
 #endif
 
 #if ON_DEATH == true
-	void onDeath() {
+	void Suit::onDeath() {
 
 	}
 #endif
 
 #if ON_RESPAWN == true
-	void onRespawn() {
-
+	void Suit::onRespawn() {
+		
 	}
 #endif
 
 #if ON_OBJECTIVE_START== true
-	void onObjStart() {
-
-	}
-#endif
-
-#if ON_OBJECTIVE_DNF == true
-	void onObjDnf() {
+	void Suit::onObjStart(int progress) {
 
 	}
 #endif
 
 #if ON_OBJECTIVE_FINISH == true
-	void onObjFinish() {
+	void Suit::onObjFinish(int progress) {
 
 	}
 #endif
 
 #if ON_GAME_START == true
-	void onGameStart() {
+	void Suit::onGameStart() {
 
 	}
 #endif
 #if ON_GAME_END == true
-	void onGameEnd() {
+	void Suit::onGameEnd() {
 
 	}
 #endif
 
 #if ON_CUSTOM_EVENT == true
-	void onCustomEvent() {
+	void Suit::onCustomEvent() {
 
 	}
 #endif

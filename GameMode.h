@@ -1,8 +1,11 @@
 #ifndef GAMEMODE_H
 #define GAMEMODE_H
+
 //Welcome to the game mode settings file!
 //This file should serve as a dynamic properties file for custom gamemodes
 //Eventually, I would like to add a gui for doing all of this, but text is fine for now
+
+
 
 //pin configuration
 #define constDelay 250 //make longer to make lights flash for longer,and vice versa
@@ -15,6 +18,11 @@
 #define buzzerPin 9 //other pins, with buzzer both 9 and 10 are taken
 #define triggerPin A2 //duh
 #define neoPin 4 //Indicator neopixel pin
+
+//code config
+#define USE_STATS false //stats machine, but no way to report stats currently
+#define DEBUG
+#define VERBOSE_DEBUG
 
 //game config
 #define IR_SETUP 0  //setting up over IR or with default values in gun
@@ -73,57 +81,18 @@ const gunProfile shotgun = { 6, 0, 4, 8, 0xCA };
 
 //below are functions that control what the gun does when game events happen
 //These can be toggled by the defines below
-#define ON_SHOOT true
-#define ON_HIT true
+#define ON_SHOOT false
+#define ON_HIT false
 #define ON_RELOAD_START true
-#define ON_RELOAD_END true
-#define ON_DEATH true
-#define ON_RESPAWN true
-#define ON_OBJECTIVE_START true //flag, bomb, whatever.  all the same trigger b/c it's easier that way
-#define ON_OBJECTIVE_DNF true //DNF=did not finish
-#define ON_OBJECTIVE_FINISH true
-#define ON_GAME_START true
-#define ON_GAME_END true
-#define ON_CUSTOM_EVENT true //very complicated, but will try to implement
+#define ON_RELOAD_END false
+#define ON_DEATH false
+#define ON_RESPAWN false
+#define ON_OBJECTIVE_START false //flag, bomb, whatever.  all the same trigger b/c it's easier that way
+#define ON_OBJECTIVE_FINISH false
+#define ON_GAME_START false
+#define ON_GAME_END false
+#define ON_CUSTOM_EVENT false //very complicated, but will try to implement
 #define CUSTOM_EVENT cAddHealth //use a suit command, which are enumerated in duinotagv2.h
-
-//now to define the functions
-#if ON_SHOOT == true
-	void onShoot();
-#endif
-#if ON_HIT == true
-	void onHit();
-#endif
-#if ON_RELOAD_START == true
-	void onReloadStart();
-#endif
-#if ON_RELOAD_END == true
-	void onReloadEnd();
-#endif
-#if ON_DEATH == true
-	void onDeath();
-#endif
-#if ON_RESPAWN == true
-	void onRespawn();
-#endif
-#if ON_OBJECTIVE_START== true
-	void onObjStart();
-#endif
-#if ON_OBJECTIVE_DNF == true
-	void onObjDnf();
-#endif
-#if ON_OBJECTIVE_FINISH == true
-	void onObjFinish();
-#endif
-#if ON_GAME_START == true
-	void onGameStart();
-#endif
-#if ON_GAME_END == true
-	void onGameEnd();
-#endif
-#if ON_CUSTOM_EVENT == true
-	void onCustomEvent();
-#endif
 
 //do not change below values
 #if MAX_RESPAWN != 0 && RESPAWN_ALLOWED
