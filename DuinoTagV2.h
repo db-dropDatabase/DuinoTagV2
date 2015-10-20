@@ -13,31 +13,21 @@
 
 //#include <FlexiTimer\FlexiTimer2.h>
 
+#include <GameMode.h>
+
 #define myByte unsigned int
 
-#define constDelay 1000
-#define sPacketLength 29
+#define sPacketLength 29 
 const int frequency = 56;
-const int sendingPin = 0; //never used in code, but still important
-#define recievePin A4
-#define muzzlePin 2 //light pins below
-#define leftPin 0
-#define rightPin 1
-#define hitPin A0
-#define buzzerPin 10 //other pins, with buzzer both 9 and 10 are taken
-#define triggerPin 12
-#define neoPin 8
+#define IR_BURST_UPPER 60 //numbers to turn raw lengths of IR into signal, probably don't mess with them
+#define IR_BURST_HEADER 40
+#define IR_BURST_ONE 20
+#define IR_BURST_ZERO 8
+
 
 /*--MARIMOLE-DEF_BEGIN--*/
 void loop();
 void setup();
-//bool Suit::command(SuitCommmands command, int amount);
-//bool Lasergun::setupGun(myByte iPlayerID, myByte currentTeam, myByte iClipNum, myByte iClipSize);
-//bool Suit::setup(myByte iTeamID, myByte iPlayerID, myByte iClipNum, myByte iClipSize, Lasergun *gun);
-//void Arduino::pause(bool reset);
-//bool Arduino::lightCommand(const lightControl steps[15]);
-//bool Arduino::checkTrigger();
-//bool Arduino::playLights(arduinoLights command);
 class Arduino;
 class Bitshift;
 class Suit;
@@ -49,7 +39,6 @@ double MHitDelay(myByte in);
 int milesHealth(myByte health);
 int milesRPM(myByte rpm);
 int milesDamage(myByte damageIn);
-bool initPin(int pinNum);
 int decodePulse(int pulseLength);
 int boolToInt(bool input[8]);
 void intToBool(unsigned int input, unsigned int start, unsigned int len, char * ray);
@@ -58,7 +47,7 @@ void intToBool(unsigned int input, unsigned int start, unsigned int len, char * 
 class Bitshift{
 		public:
 		unsigned int store;
-		bool& operator[] (unsigned int x);
+		bool grab(unsigned int place);
 		Bitshift& operator= (const unsigned int &x);
 		void flip(unsigned int place, bool value);
 		Bitshift();
@@ -66,7 +55,7 @@ class Bitshift{
 // :(
 
 struct packet{
-	Bitshift data1;//1 bit for packet type, 7 bits for playerID 
+	Bitshift data1;  //1 bit for packet type, 7 bits for playerID 
 	Bitshift data2;  //6 or 8 bits for team and damage or message data
 };
 
@@ -103,21 +92,6 @@ const lightControl gameOn[15] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay
 const lightControl dead[15] = {hitOn,playDead,hitOff,over};
 const lightControl gameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
 	//is this cool or what?!
-
-struct soundProp{
-	bool escalating; //playing sound up or down
-	unsigned int start;
-	unsigned int end;
-	unsigned int interval; //in micro seconds
-};
-
-//below are sound props. can be edited freely.
-//the sound is played by escalating or deescalating from start freq. to end freq. with a buzzer
-const soundProp pPew = {false, 1600, 400, 10}; //for ex. starts a 1600hz, goes down 1 each inturupt until 400hz
-const soundProp pHit = {false, 750, 200, 100};
-const soundProp pStart = {true, 50, 2000, 10};
-const soundProp pDead = {false, 1000, 10, 10};
-//yay!
 
 enum SuitCommmands{  //also includes message packet commands
 		cShot, //take damage
@@ -172,18 +146,13 @@ enum SuitCommmands{  //also includes message packet commands
 		myByte clipNum;
 	};
 	
-	const gunProfile machineGun = {3, 7, 4, 50, 0xCA}; //conforms to the f ing milestag protocol
-	const gunProfile pistol = {5, 0, 2, 8, 0xCA}; //technicly should be semi-auto, but can't add that here
-	const gunProfile sniper = {12, 0, 5, 4, 0xCA};
-	const gunProfile shotgun = {6, 0, 4, 8, 0xCA};
-	
 	class Arduino{ //for playing sounds and lights
 		public:
 		//functions
 		bool playLights(arduinoLights command);
 		void pause();
 		void reset();
-		bool setup(int maxHealth, int maxAmmo, int maxArmor, myByte team); //initilizes pins, thats all
+		void setup(int maxHealth, int maxAmmo, int maxArmor, myByte team); //initilizes pins, thats all
 		bool update(); //used to not delay entire program if playing leds, just update when ready and change action
 		void changeValues(double aHealth, double aAmmo, double aArmor);
 		void playPew(); //pew needs to behave differently than other sounds, so yeah
@@ -196,13 +165,12 @@ enum SuitCommmands{  //also includes message packet commands
 		bool idle;
 		bool paused;
 		bool delaying;
-		bool pewCommand;
-		int currentPew;
 		bool pewOverride;
 		bool newHealth;
 		bool newAmmo;
 		int soundDelay;
 		long long int lastTime;
+		long int lastPewTime;
 		double aMaxHealth;
 		double healthDisp;
 		double aMaxAmmo;
@@ -220,16 +188,32 @@ enum SuitCommmands{  //also includes message packet commands
 	//f that
 	namespace Sounds{  //updating lights semi-consistintly works, but it doesn't for sound.  This namespace will handle it all in an ISR which will be called every 100us or so
 		//is will also be pretty much handled by Arduino
+		struct soundProp {
+			bool escalating; //playing sound up or down
+			unsigned int start;
+			unsigned int end;
+			unsigned int interval; //in microseconds
+			unsigned int jump; //in hz
+		};
+
+		//below are sound props. can be edited freely.
+		//the sound is played by escalating or deescalating from start freq. to end freq. with a buzzer
+		const soundProp pPew = { false, 1600, 400, 1000, 50 }; //ex. starts a 1600hz, goes down 50hz every 1000us until 400hz
+		const soundProp pHit = { false, 750, 200, 100, 10 };
+		const soundProp pStart = { true, 50, 2000, 10, 10 };
+		const soundProp pDead = { false, 1000, 10, 10, 1 };
+		//yay!
+
 		extern void playSound(const soundProp sound);
 		extern void updateSound(void); //called by timer 3
-		extern void reset();
+		extern volatile void reset();
 		extern void pause();
 		extern volatile int currentFreq;
 		extern volatile bool playingSound;
 		extern volatile bool paused;
 		extern volatile soundProp currentSound;
 	}
-	
+#if USE_STATS == true
 	class Stats{
 		public:
 		int	calculate(statCommand command);
@@ -238,67 +222,50 @@ enum SuitCommmands{  //also includes message packet commands
 		void reset();
 		Stats();
 		private:
-		uint_least8_t hitCount[127]; //I got hit x times by x!
+		uint_least8_t hitCount[127]; //I got hit x times by y!
 		unsigned int deathCount;
 		unsigned int shotCount;
 		unsigned int reloadCount;
 	};
-	
+#endif
 	class Suit{
 		public:
 		//in order as shown in table, but only if pertains to suits
+		myByte playerID;
 		myByte teamID;
-		myByte hitLEDTimeout; //seconds
 		myByte startHealth; //value reference in code.cpp
-		myByte respawnTime; //in tens of seconds, not used
+		myByte respawnTime; //in seconds
 		int armor; 
 		//bytes below are all part of a gamsettings thing, so I split them up, 0x00 is false and 0x01 is true
-		bool friendlyFire;
-		bool zombieMode;
-		bool medic;
 		//part 2
 		bool respawns;  //enable respawns
-		bool gamemode; //enable gamemode in general
 		//normal bytes
-		myByte hitDelay;//value reference in code.cpp
-		myByte startDelay; //seconds
-		myByte deathDelay; //seconds
-		myByte timeLimit; //minutes
-		myByte maxRespawn;
 		//values and functions not included in table
-		bool respawnLimit; //enables or disables respawn limit
-		myByte playerID;
 		int currentHealth;
 		int currentArmor;
 		unsigned int numRespawns; //if respawn limit is set
-		unsigned int respawnTimeLeft;
 		bool isDead;
 		Suit();
 		void setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe); //sets everything to defaults for a quick game, except for shown varibles
 		//will add score and cloning packets later
 		bool action(packet packetYay); //put in packet, out goes lasers!
 		void sCommand(SuitCommmands command, int amount);
+#if IR_SETUP==1
 		void waitForSetup(IRrecv * showMe); //damn you FTC
-		
+#endif
+#if USE_STATS == true
 		Stats stat;
+#endif
 		
 		//test merging of classes
 		//gun stuff
-		bool overheat;  //if infinite clips, after awhile the gun will stop shooting
-		myByte fireType;  //0x00 semi auto, 0x01 burst, 0x02 full auto
-		myByte burstRounds; //num of rounds in burst mode
-		bool IRPower; //0x00 low, 0x01 high :/
-		//myByte IRRange; //not entirely sure how to regulate this, so unused for now
-		myByte gunSettings; //0x01 muzzle flash on, 0x02 Overheat on, 0x03 for both, not implemented
-		//bytes below are all part of a gamsettings thing, so I split them up, 0x00 is false and 0x01 is true
-		//custom, the way they did this in the protocol is weird
-		//bytes below are in the part 2 of the gamesettings thing
-		bool ammoReset;  //restock ammo on spawn
 		//functions or variables not included in table
 		unsigned int currentReload;
 		unsigned int shotPacket[30]; //for IRsend library, initilized in setuppacket
 		bool gunCommand(GunCommands, int amount);
+#if CUSTOM_WEAPONS == true
 		void switchGun(gunProfile newGun);
+#endif
 		Arduino display;
 		IRrecv * recv;
 		bool checkStatus();
@@ -314,6 +281,41 @@ enum SuitCommmands{  //also includes message packet commands
 		
 		parsedPacket readPacket(packet packetYay);
 		IRsend irtrans;
+
+		//custom gamemode funcs.
+#if ON_SHOOT == true
+		void onShoot();
+#endif
+#if ON_HIT == true
+		void onHit();
+#endif
+#if ON_RELOAD_START == true
+		void onReloadStart();
+#endif
+#if ON_RELOAD_END == true
+		void onReloadEnd();
+#endif
+#if ON_DEATH == true
+		void onDeath();
+#endif
+#if ON_RESPAWN == true
+		void onRespawn();
+#endif
+#if ON_OBJECTIVE_START== true
+		void onObjStart(int progress);
+#endif
+#if ON_OBJECTIVE_FINISH == true
+		void onObjFinish(int progress);
+#endif
+#if ON_GAME_START == true
+		void onGameStart();
+#endif
+#if ON_GAME_END == true
+		void onGameEnd();
+#endif
+#if ON_CUSTOM_EVENT == true
+		void onCustomEvent();
+#endif
 	};
 	
 	#endif
