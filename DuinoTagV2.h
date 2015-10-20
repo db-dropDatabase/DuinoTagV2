@@ -3,8 +3,6 @@
 #define DUINOTAGV2_H
 //---------------------------------------------------------------------------
 
-#define ESP8266 //for neopixel stuff
-
 #include <Custom IR\IRremoteESP8266.h>
 
 //#include <ToneAC\toneAC.h>

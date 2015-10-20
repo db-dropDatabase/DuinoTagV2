@@ -9,20 +9,20 @@
 
 //pin configuration
 #define constDelay 250 //make longer to make lights flash for longer,and vice versa
-#define sendPin 5 //never used in code, but still important
-#define recievePin 15 //IR reciever pin
-#define muzzlePin A1 //muzzle flash
-#define leftPin 6 //left team neopixels
-#define rightPin 7 //right team neopixels
-#define hitPin A3 //hit LED
-#define buzzerPin 9 //other pins, with buzzer both 9 and 10 are taken
-#define triggerPin A2 //duh
-#define neoPin 4 //Indicator neopixel pin
+#define sendPin 0 //Used in code!
+#define recievePin 1 //IR reciever pin
+#define muzzlePin 3 //muzzle flash
+#define leftPin 2 //left team neopixels
+#define rightPin 4 //right team neopixels
+#define hitPin 6 //hit LED
+#define buzzerPin 7 //other pins, with buzzer both 9 and 10 are taken
+#define triggerPin 8 //duh
+#define neoPin 9 //Indicator neopixel pin
 
 //code config
 #define USE_STATS false //stats machine, but no way to report stats currently
 #define DEBUG
-#define VERBOSE_DEBUG
+//#define VERBOSE_DEBUG
 
 //game config
 #define IR_SETUP 0  //setting up over IR or with default values in gun

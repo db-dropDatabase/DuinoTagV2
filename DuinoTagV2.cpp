@@ -179,7 +179,9 @@ void Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	neopix = Adafruit_NeoPixel(16, neoPin, NEO_GRB + NEO_KHZ800); 
 	left = Adafruit_NeoPixel(8/*?*/, leftPin, NEO_GRB + NEO_KHZ800);
 	right = Adafruit_NeoPixel(8, rightPin, NEO_GRB + NEO_KHZ800);
-	
+#ifdef DEBUG
+	Serial.println("Got here!");
+#endif
 	neopix.begin();
 	left.begin();
 	right.begin();
@@ -877,7 +879,7 @@ Suit::Suit(void){
 	currentAmmo = gunValues.clipNum;
 
 	//IR 
-	irtrans.begin(sendingPin);
+	irtrans.begin(sendPin);
 }
 
 parsedPacket Suit::readPacket(packet packetYay){

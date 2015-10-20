@@ -19,6 +19,7 @@
 #define ARDUINO_ESP8266_ESP12
 #define ARDUINO_ARCH_ESP8266
 #define __cplusplus
+#define __ARM__
 #define __inline__
 #define __asm__(x)
 #define __extension__
@@ -102,7 +103,10 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <Adafruit_NeoPixel.h>
 #include <DuinoTagV2.cpp>
 #include <DuinoTagV2.h>
+#include <GameMode.cpp>
+#include <GameMode.h>
 #include <IRremoteESP8266.cpp>
 #include <IRremoteESP8266.h>
 #include <IRremoteInt.h>
+#include <esp8266.c>
 #endif
