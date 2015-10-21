@@ -83,14 +83,14 @@ const gunProfile shotgun = { 6, 0, 4, 8, 0xCA };
 //These can be toggled by the defines below
 #define ON_SHOOT false
 #define ON_HIT false
-#define ON_RELOAD_START true
+#define ON_RELOAD_START false
 #define ON_RELOAD_END false
 #define ON_DEATH false
 #define ON_RESPAWN false
 #define ON_OBJECTIVE_START false //flag, bomb, whatever.  all the same trigger b/c it's easier that way
 #define ON_OBJECTIVE_FINISH false
 #define ON_GAME_START false
-#define ON_GAME_END false
+#define ON_GAME_END true
 #define ON_CUSTOM_EVENT false //very complicated, but will try to implement
 #define CUSTOM_EVENT cAddHealth //use a suit command, which are enumerated in duinotagv2.h
 

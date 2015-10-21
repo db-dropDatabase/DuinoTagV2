@@ -63,7 +63,14 @@
 #endif
 #if ON_GAME_END == true
 	void Suit::onGameEnd() {
-
+		//Spray and pray mass game end test
+		unsigned int gameEnd[52] = { 2400, 600, 1200, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 1200, 600, 1200, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 1200, 600, 1200, 600, 1200, 600, 1200, 600, 1200, 600, 1200, 600, 600, 600, 1200, 600, 600, 600, 600, 600, 600, 600 };
+		for (int i = 0; i < 25; i++) {
+			delayMicroseconds(100);
+			irsend.sendRaw(gameEnd, 52, frequency);
+			delayMicroseconds(100);
+			delay(250);
+		}
 	}
 #endif
 

@@ -1245,6 +1245,8 @@ void Suit::sCommand(SuitCommmands command, int amount){
 			onGameEnd();
 #endif
 			display.playLights(pLightsGameOver);
+			while (!display.update()) {}
+			display.playIdle();
 		}
 		break;
 		case cResetClock:
