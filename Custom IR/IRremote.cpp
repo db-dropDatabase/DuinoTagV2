@@ -29,7 +29,7 @@ volatile irparams_t irparams;
 // These versions of MATCH, MATCH_MARK, and MATCH_SPACE are only for debugging.
 // To use them, set DEBUG in IRremoteInt.h
 // Normally macros are used for efficiency
-#ifdef DEBUG
+#ifdef IR_DEBUG
 int MATCH(int measured, int desired) {
   Serial.print("Testing: ");
   Serial.print(TICKS_LOW(desired), DEC);
@@ -74,6 +74,7 @@ int MATCH_SPACE(int measured_ticks, int desired_us) {return MATCH(measured_ticks
 // Debugging versions are in IRremote.cpp
 #endif
 
+#ifdef ENCODE
 void IRsend::sendNEC(unsigned long data, int nbits)
 {
   enableIROut(38);
@@ -133,6 +134,8 @@ void IRsend::sendSony(unsigned long data, int nbits) {
   }
 }
 
+#endif
+
 void IRsend::sendRaw(unsigned int buf[], int len, int hz)
 {
   enableIROut(hz);
@@ -147,6 +150,7 @@ void IRsend::sendRaw(unsigned int buf[], int len, int hz)
   space(0); // Just to be sure
 }
 
+#ifdef ENCODE
 // Note: first bit must be a one (start bit)
 void IRsend::sendRC5(unsigned long data, int nbits)
 {
@@ -269,6 +273,7 @@ void IRsend::sendSAMSUNG(unsigned long data, int nbits)
   mark(SAMSUNG_BIT_MARK);
   space(0);
 }
+#endif
 
 void IRsend::mark(int time) {
   // Sends an IR mark for the specified number of microseconds.
@@ -440,67 +445,68 @@ int IRrecv::decode(decode_results *results) {
   if (irparams.rcvstate != STATE_STOP) {
     return ERR;
   }
-#ifdef DEBUG
+#ifdef DECODE
+#ifdef IR_DEBUG
   Serial.println("Attempting NEC decode");
 #endif
   if (decodeNEC(results)) {
     return DECODED;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   Serial.println("Attempting Sony decode");
 #endif
   if (decodeSony(results)) {
     return DECODED;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   Serial.println("Attempting Sanyo decode");
 #endif
   if (decodeSanyo(results)) {
     return DECODED;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   Serial.println("Attempting Mitsubishi decode");
 #endif
   if (decodeMitsubishi(results)) {
     return DECODED;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   Serial.println("Attempting RC5 decode");
 #endif  
   if (decodeRC5(results)) {
     return DECODED;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   Serial.println("Attempting RC6 decode");
 #endif 
   if (decodeRC6(results)) {
     return DECODED;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
     Serial.println("Attempting Panasonic decode");
 #endif 
     if (decodePanasonic(results)) {
         return DECODED;
     }
-#ifdef DEBUG
+#ifdef IR_DEBUG
     Serial.println("Attempting LG decode");
 #endif 
     if (decodeLG(results)) {
         return DECODED;
     }
-#ifdef DEBUG
+#ifdef IR_DEBUG
     Serial.println("Attempting JVC decode");
 #endif 
     if (decodeJVC(results)) {
         return DECODED;
     }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   Serial.println("Attempting SAMSUNG decode");
 #endif
   if (decodeSAMSUNG(results)) {
     return DECODED;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   Serial.println("Attempting Whynter decode");
 #endif
   if (decodeWhynter(results)) {
@@ -515,7 +521,10 @@ int IRrecv::decode(decode_results *results) {
   // Throw away and start over
   resume();
   return ERR;
+#endif
+  return 1;
 }
+#ifdef DECODE
 
 // NECs have a repeat only 4 items long
 long IRrecv::decodeNEC(decode_results *results) {
@@ -841,7 +850,7 @@ int IRrecv::getRClevel(decode_results *results, int *offset, int *used, int t1) 
     *used = 0;
     (*offset)++;
   }
-#ifdef DEBUG
+#ifdef IR_DEBUG
   if (val == MARK) {
     Serial.println("MARK");
   } 
@@ -1171,6 +1180,7 @@ long IRrecv::decodeHash(decode_results *results) {
   return DECODED;
 }
 
+#endif
 /* Sharp and DISH support by Todd Treece ( http://unionbridge.org/design/ircommand )
 
 The Dish send function needs to be repeated 4 times, and the Sharp function
@@ -1193,6 +1203,7 @@ i.e. use 0x1C10 instead of 0x0000000000001C10 which is listed in the
 linked LIRC file.
 */
 
+#ifdef ENCODE
 void IRsend::sendSharpRaw(unsigned long data, int nbits) {
   enableIROut(38);
 
@@ -1239,3 +1250,4 @@ void IRsend::sendDISH(unsigned long data, int nbits) {
     data <<= 1;
   }
 }
+#endif

@@ -1,5 +1,5 @@
 /* File automatically created by MariaMole */
-#define DEBUG
+//#define DEBUG
 #include <DuinoTagV2.h>
 
 using namespace Sounds;

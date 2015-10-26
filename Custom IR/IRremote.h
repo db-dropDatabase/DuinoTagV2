@@ -19,11 +19,13 @@
 
 // The following are compile-time library options.
 // If you change them, recompile the library.
-// If DEBUG is defined, a lot of debugging output will be printed during decoding.
+// If IR_DEBUG is defined, a lot of debugging output will be printed during decoding.
 // TEST must be defined for the IRtest unittests to work.  It will make some
 // methods virtual, which will be slightly slower, which is why it is optional.
-//#define DEBUG
+//#define IR_DEBUG
 // #define TEST
+//#define DECODE //enable decoding of signals, disabled for smaller code
+//#define ENCODE //enable automatic encoding of signals, disabled for smaller code
 
 // Results returned from the decoder
 class decode_results {
@@ -69,6 +71,7 @@ public:
   void resume();
 private:
   // These are called by decode
+#ifdef DECODE
   int getRClevel(decode_results *results, int *offset, int *used, int t1);
   long decodeNEC(decode_results *results);
   long decodeSony(decode_results *results);
@@ -83,6 +86,7 @@ private:
   long decodeWhynter(decode_results *results);
   long decodeHash(decode_results *results);
   int compare(unsigned int oldval, unsigned int newval);
+#endif
 
 } ;
 
@@ -97,13 +101,16 @@ class IRsend
 {
 public:
   IRsend() {}
+#ifdef ENCODE
   void sendWhynter(unsigned long data, int nbits);
   void sendNEC(unsigned long data, int nbits);
   void sendSony(unsigned long data, int nbits);
+#endif
   // Neither Sanyo nor Mitsubishi send is implemented yet
   //  void sendSanyo(unsigned long data, int nbits);
   //  void sendMitsubishi(unsigned long data, int nbits);
   void sendRaw(unsigned int buf[], int len, int hz);
+#ifdef ENCODE
   void sendRC5(unsigned long data, int nbits);
   void sendRC6(unsigned long data, int nbits);
   void sendDISH(unsigned long data, int nbits);
@@ -113,6 +120,7 @@ public:
   void sendJVC(unsigned long data, int nbits, int repeat); // *Note instead of sending the REPEAT constant if you want the JVC repeat signal sent, send the original code value and change the repeat argument from 0 to 1. JVC protocol repeats by skipping the header NOT by sending a separate code value like NEC does.
   // private:
   void sendSAMSUNG(unsigned long data, int nbits);
+#endif
   void enableIROut(int khz);
   VIRTUAL void mark(int usec);
   VIRTUAL void space(int usec);

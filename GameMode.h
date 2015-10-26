@@ -22,7 +22,7 @@
 //code config
 #define USE_STATS false //stats machine, but no way to report stats currently
 #define DEBUG
-#define VERBOSE_DEBUG
+//#define VERBOSE_DEBUG
 
 //game config
 #define IR_SETUP 0  //setting up over IR or with default values in gun

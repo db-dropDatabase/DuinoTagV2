@@ -2,10 +2,7 @@
 #define DUINOTAGV2_CPP
 
 #include <DuinoTagV2.h>
-
-#ifndef DEBUG
-#define DEBUG
-#endif
+ 
 
 //Sounds varibles that have to be declared
 volatile bool Sounds::playingSound;
