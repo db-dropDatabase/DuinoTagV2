@@ -6,7 +6,7 @@
 
 //Sounds varibles that have to be declared
 volatile bool Sounds::playingSound;
-volatile int Sounds::currentFreq;
+volatile int unsigned Sounds::currentFreq;
 volatile bool Sounds::paused;
 volatile Sounds::soundProp Sounds::currentSound;
 
@@ -496,6 +496,8 @@ bool Arduino::update(){
 			over = lightCommand(gameOver);
 		}
 		break;
+		default:
+		break;
 	}
 	if(over){
 		for(int i=1; i<5; i++){
@@ -633,33 +635,13 @@ message packet consists of one bit for packet type, 7 more bits for message ID, 
 //for now, I will assume that the packet receiving is handled by something else
 //let's write some functions
 
-
-void intToBool(unsigned int input, unsigned int start, unsigned int len, bool * ray){
-	unsigned int mod=2;
-	start += len-1;
-	while(input>0 || len>0){
-		if(input%mod>0){
-			ray[start] = true;
-		}
-		else{
-			ray[start] = false;
-		}
-		input-=input%mod;
-		start--;
-		len--;
-		mod*=2;
-	}
-}
-
 void Suit::setUpPacket(){
-	bool packet[13];
-	intToBool(playerID,0,7,packet);
-	intToBool(teamID,7,2,packet);
-	intToBool(currentProfile.damage,9,4,packet);
+	Bitshift packet;
+	packet = (playerID * 64) + (teamID * 16) + currentProfile.damage;
 	#ifdef DEBUG
 	Serial.println("String Packet: ");
 	for(int i=0; i<13; i++){
-		Serial.print(packet[i]);
+		Serial.print(packet.grab(i));
 		Serial.print(", ");
 	}
 	Serial.println("");
@@ -668,16 +650,16 @@ void Suit::setUpPacket(){
 	shotPacket[1] = 600; //first space
 	shotPacket[2] = 600; //first zero to say shot packet
 	shotPacket[3] = 600; //secound space
-	int bitcounter=0;
-	for(int i=4; i<30; i++){
+	int bitcounter=12;
+	for(int i=4; i<30&&bitcounter>=0; i++){
 		if(!(i & 1)){ //alternating
-			if(packet[bitcounter]==false){
+			if(packet.grab(bitcounter)==false){
 				shotPacket[i] = 600; //0
 			}
 			else{
 				shotPacket[i] = 1200; //1
 			}
-			bitcounter++;
+			bitcounter--;
 		}
 		else{
 			shotPacket[i]=600;
@@ -893,7 +875,7 @@ parsedPacket Suit::readPacket(packet packetYay){
 	if(!packetYay.data1.grab(7)){ //check very first (last?) bit for message type
 		//shot packet
 		//add stats here later
-		int tmpTeamID = 2*packetYay.data2.grab(7) + packetYay.data2.grab(6);
+		unsigned int tmpTeamID = 2*packetYay.data2.grab(7) + packetYay.data2.grab(6);
 		if(tmpTeamID == teamID){ //checks to see if shot by friend or foe, and if friendlyfire is on
 			//take damage, and if I make a stats machine record player Id
 			#ifdef DEBUG
@@ -1069,8 +1051,6 @@ bool Suit::action(packet packetYay){
 
 void Suit::sCommand(SuitCommmands command, int amount){
 	//ugh, here we go
-	//I guess I have to add arduino commands in here, so library might not function as expected
-	//functions only in arduino libraries: delayMicroseconds(), delay()
 	switch(command){
 		case cShot:
 		{

@@ -40,8 +40,6 @@ int milesHealth(myByte health);
 int milesRPM(myByte rpm);
 int milesDamage(myByte damageIn);
 int decodePulse(int pulseLength);
-int boolToInt(bool input[8]);
-void intToBool(unsigned int input, unsigned int start, unsigned int len, char * ray);
 /*--MARIMOLE-DEF_END--*/
 //sorry, but it has to be done...
 class Bitshift{
@@ -208,7 +206,7 @@ enum SuitCommmands{  //also includes message packet commands
 		extern void updateSound(void); //called by timer 3
 		extern volatile void reset();
 		extern void pause();
-		extern volatile int currentFreq;
+		extern volatile unsigned int currentFreq;
 		extern volatile bool playingSound;
 		extern volatile bool paused;
 		extern volatile soundProp currentSound;
