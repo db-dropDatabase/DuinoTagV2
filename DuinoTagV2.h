@@ -57,14 +57,6 @@ struct packet{
 	Bitshift data2;  //6 or 8 bits for team and damage or message data
 };
 
-enum arduinoLights {
-	pLightsHit,
-	pLightsDead,
-	pLightsGameOn,
-	pLightsGameOver,
-	null
-};
-
 enum lightControl{
 	muzzleOn,
 	muzzleOff,
@@ -85,35 +77,39 @@ enum lightControl{
 
 //below are command lists, and can be edited freely, use the commands above
 //const lightControl shoot[15] = {playPew}; not used after playPew function implemented
-const lightControl hit[15] = {hitOn,playHit,hitOff,over}; //set delay to 250 or something
-const lightControl gameOn[15] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay,rightOff,leftOff,over};
-const lightControl dead[15] = {hitOn,playDead,hitOff,over};
-const lightControl gameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
+const lightControl pLightsHit[15] = {hitOn,playHit,hitOff,over}; //set delay to 250 or something
+const lightControl pLightsGameOn[15] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay,rightOff,leftOff,over};
+const lightControl pLightsDead[15] = {hitOn,playDead,hitOff,over};
+const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
 	//is this cool or what?!
 
-enum SuitCommmands{  //also includes message packet commands
+	enum SuitCommmands {  //also includes message packet commands
 		cShot, //take damage
 		//message packet commands
-		cAddHealth,
-		cAddAmmo,
-		cKill,//0x00
-		cPause,//0x01
-		cStartGame,//0x02
-		cDefaults,//etc.//Value Team name 0x00 Red,0x01 Blue,0x02 Yellow,0x03 Green
-		cRespawn,
-		cINewGame,//Immediate new game
-		cFullAmmo,
-		cEndGame,
-		cResetClock, //not implemented
-		cExplodePlayer,
-		cReadyUp, //ready up for new game, not implemented
-		cFullHealth,
-		cFullArmor,
-		cClearScores,
-		cTestSensors,
-		cStun,
-		cDisarm,
-		cNull
+		cAddHealth = 128,
+		cAddAmmo = 129,
+		cSpecialCommand = 131,
+		cKill = 0,//0x00
+		cPause = 1,//0x01
+		cStartGame = 2,//0x02
+		cDefaults = 3,//etc.
+		cRespawn = 4,
+		cINewGame = 5,//Immediate new game
+		cFullAmmo = 6,
+		cEndGame = 7,
+		cResetClock = 8, //not implemented
+		cExplodePlayer = 11,
+		cReadyUp = 12, //ready up for new game, not implemented
+		cFullHealth = 13,
+		cFullArmor = 15,
+		cClearScores = 20,
+		cTestSensors = 21,
+		cStun = 22,
+		cDisarm = 23,
+		cAmmoPick = 136,
+		cHealthPick = 137,
+		cObj = 138,
+		cNull = 0
 	};
 	enum GunCommands{
 		gStop,
@@ -132,7 +128,7 @@ enum SuitCommmands{  //also includes message packet commands
 	};
 	
 	struct parsedPacket{
-		SuitCommmands whatToDo;
+		unsigned int whatToDo;
 		unsigned int amount; //for add ammo or health
 	};
 	
@@ -147,7 +143,7 @@ enum SuitCommmands{  //also includes message packet commands
 	class Arduino{ //for playing sounds and lights
 		public:
 		//functions
-		bool playLights(arduinoLights command);
+		bool playLights(const lightControl * command);
 		void pause();
 		void reset();
 		void setup(int maxHealth, int maxAmmo, int maxArmor, myByte team); //initilizes pins, thats all
@@ -157,7 +153,7 @@ enum SuitCommmands{  //also includes message packet commands
 		void playIdle();
 		Arduino();
 		private:
-		arduinoLights commandBuffer[5];
+		const lightControl * commandBuffer[5];
 		bool lightCommand(const lightControl steps[15]);
 		int currentStep;
 		bool idle;
@@ -247,7 +243,7 @@ enum SuitCommmands{  //also includes message packet commands
 		void setup(myByte iTeamID, myByte iPlayerID, IRrecv * showMe); //sets everything to defaults for a quick game, except for shown varibles
 		//will add score and cloning packets later
 		bool action(packet packetYay); //put in packet, out goes lasers!
-		void sCommand(SuitCommmands command, int amount);
+		bool sCommand(unsigned int command, unsigned int amount);
 #if IR_SETUP==1
 		void waitForSetup(IRrecv * showMe); //damn you FTC
 #endif

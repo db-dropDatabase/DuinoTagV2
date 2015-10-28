@@ -87,18 +87,18 @@ extern "C" void __cxa_pure_virtual() {;}
 #define portOutputRegister(P)
 #define portInputRegister(P)
 #define portModeRegister(P)
-#include <Port32U4.ino>
-#include <Adafruit_NeoPixel.cpp>
-#include <Adafruit_NeoPixel.h>
-#include <DuinoTagV2.cpp>
-#include <DuinoTagV2.h>
-#include <FlexiTimer2.cpp>
-#include <FlexiTimer2.h>
-#include <GameMode.cpp>
-#include <GameMode.h>
-#include <IRremote.cpp>
-#include <IRremote.h>
-#include <IRremoteInt.h>
-#include <toneAC.cpp>
-#include <toneAC.h>
+#include <..\Github\Port32U4.ino>
+#include <Neopixel\Adafruit_NeoPixel.cpp>
+#include <Neopixel\Adafruit_NeoPixel.h>
+#include <..\Github\DuinoTagV2.cpp>
+#include <..\Github\DuinoTagV2.h>
+#include <FlexiTimer\FlexiTimer2.cpp>
+#include <FlexiTimer\FlexiTimer2.h>
+#include <..\Github\GameMode.cpp>
+#include <..\Github\GameMode.h>
+#include <Custom IR\IRremote.cpp>
+#include <Custom IR\IRremote.h>
+#include <Custom IR\IRremoteInt.h>
+#include <ToneAC\toneAC.cpp>
+#include <ToneAC\toneAC.h>
 #endif

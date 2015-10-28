@@ -226,10 +226,10 @@ void Arduino::playIdle(){
 	lastTime=millis();
 }
 
-bool Arduino::playLights(arduinoLights command){
+bool Arduino::playLights(const lightControl * command){
 	bool check=false;
 	for(int i=0; i<5&&!check; i++){
-		if(commandBuffer[i]==null){
+		if(commandBuffer[i]==NULL){
 			commandBuffer[i]=command;
 			check=true;
 		}
@@ -368,7 +368,7 @@ void Arduino::reset(){
 	pewOverride=false;
 	idle=false;
 	for(int i=0; i<5; i++){
-		commandBuffer[i] = null;
+		commandBuffer[i] = NULL;
 	}
 	Sounds::reset();
 	noToneAC();
@@ -474,36 +474,11 @@ bool Arduino::update(){
 		}
 		return false;
 	}
-	bool over = false;
-	switch(commandBuffer[0]){
-		case pLightsHit:
-		{
-			over = lightCommand(hit);
-		}
-		break;
-		case pLightsGameOn:
-		{
-			over = lightCommand(gameOn);
-		}
-		break;
-		case pLightsDead:
-		{
-			over = lightCommand(dead);
-		}
-		break;
-		case pLightsGameOver:
-		{
-			over = lightCommand(gameOver);
-		}
-		break;
-		default:
-		break;
-	}
-	if(over){
+	if(lightCommand(commandBuffer[0])){
 		for(int i=1; i<5; i++){
 			commandBuffer[i-1]=commandBuffer[i];
 		}
-		commandBuffer[4] = null;
+		commandBuffer[4] = NULL;
 		currentStep=0;
 	}
 	if (lastPewTime > 0) {
@@ -512,7 +487,7 @@ bool Arduino::update(){
 			digitalWrite(muzzlePin, LOW);
 		}
 	}
-	if(commandBuffer[0]==null){
+	if(commandBuffer[0]==NULL){
 		return false;
 	}
 	else{
@@ -650,7 +625,7 @@ void Suit::setUpPacket(){
 	shotPacket[1] = 600; //first space
 	shotPacket[2] = 600; //first zero to say shot packet
 	shotPacket[3] = 600; //secound space
-	int bitcounter=12;
+	int bitcounter=11;
 	for(int i=4; i<30&&bitcounter>=0; i++){
 		if(!(i & 1)){ //alternating
 			if(packet.grab(bitcounter)==false){
@@ -898,6 +873,9 @@ parsedPacket Suit::readPacket(packet packetYay){
 			packetYay.data2.flip(7,0);
 			superYay.amount= milesDamage(packetYay.data2.store/4); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
 			superYay.whatToDo=cShot;
+#if USE_STATS == true
+			stat.addValue(sHit, packetYay.data1.store);
+#endif
 		}
 		
 	}
@@ -906,126 +884,14 @@ parsedPacket Suit::readPacket(packet packetYay){
 		#ifdef DEBUG
 		Serial.println("Mesasage packet!");
 		#endif
-		unsigned int testing1 = packetYay.data1.store;
-		unsigned int testing2 = packetYay.data2.store;
+		superYay.whatToDo = packetYay.data1.store;
+		superYay.amount = packetYay.data2.store;
 		#ifdef DEBUG
 		Serial.println(packetYay.data1.store);
 		Serial.println(packetYay.data2.store);
 		#endif
-		int amountOrCommand = testing2;
-		switch(testing1){
-			case 128:
-			superYay.whatToDo = cAddHealth;
-			superYay.amount = amountOrCommand;
-			break;
-			case 129:
-			superYay.whatToDo = cAddAmmo;
-			superYay.amount = amountOrCommand;
-			break;
-			case 130: //reserved
-			break;
-			case 131:
-			switch(amountOrCommand){
-				case 0:
-				superYay.whatToDo=cKill;
-				break;
-				case 1:
-				superYay.whatToDo=cPause;
-				break;
-				case 2:
-				superYay.whatToDo=cStartGame;
-				break;
-				case 3:
-				superYay.whatToDo=cDefaults;
-				break;
-				case 4:
-				superYay.whatToDo=cRespawn;
-				break;
-				case 5:
-				superYay.whatToDo=cINewGame;
-				break;
-				case 6:
-				superYay.whatToDo=cFullAmmo;
-				break;
-				case 7:
-				superYay.whatToDo=cEndGame;
-				break;
-				case 8:
-				superYay.whatToDo=cResetClock;
-				break;
-				//9 is reserved
-				//10 is an unused command
-				case 11:
-				superYay.whatToDo=cExplodePlayer;
-				break;
-				case 12:
-				superYay.whatToDo=cReadyUp;
-				break;
-				case 13:
-				superYay.whatToDo=cFullHealth;
-				break;
-				//14 is reserved
-				case 15:
-				superYay.whatToDo=cFullArmor;
-				break;
-				//16, 17, 18, and 19 are reserved
-				case 20:
-				superYay.whatToDo=cClearScores;
-				break;
-				case 21:
-				superYay.whatToDo=cTestSensors;
-				break;
-				case 22:
-				superYay.whatToDo=cStun;
-				break;
-				case 23:
-				superYay.whatToDo=cDisarm;
-				break;
-				default:
-				superYay.whatToDo=cNull;
-				break;
-			} //bunch of admin commands
-			break;
-			//132,135,136 are reserved
-			case 135:
-			//sytstem data.  This includes cloning and score transfer
-			//don't want to tackle at the moment do later
-			break;
-			case 136:
-				superYay.whatToDo = cAddAmmo;
-				superYay.amount = amountOrCommand;
-				break;
-			case 137:
-#if MEDIC_ALLOWED==1
-				superYay.whatToDo = cAddHealth;
-				superYay.amount = amountOrCommand;
-				break;
-#else
-				superYay.whatToDo = cNull;
-				superYay.amount = 0;
-				break;
-#endif
-			case 138:
-				//objective
-#if ON_OBJECTIVE_START == 1
-				if (!hasObjective) {
-					onObjStart();
-				}
-#endif
-#if ON_OBJECTIVE_FINISH == true
-				if (amountOrCommand > 0) {
-					onObjFinish(amountOrCommand);
-				}
-#endif
-				break;	
-			//the rest are clips, health, and flag pickup
-			//will do later
-			default:
-			superYay.whatToDo=cNull;
-			break;
-		}
-		
 	}
+	
 	if(superYay.amount > 500){
 		#ifdef DEBUG
 		Serial.println("amount not initilized, so set to zero");
@@ -1039,80 +905,65 @@ parsedPacket Suit::readPacket(packet packetYay){
 bool Suit::action(packet packetYay){
 	parsedPacket out;
 	out = readPacket(packetYay);
-	if(out.whatToDo != cNull){
-		sCommand(out.whatToDo, out.amount);
-		return true;
-	}
-	else{
-		return false;
-	}
+	return sCommand(out.whatToDo, out.amount);
 	
 }
 
-void Suit::sCommand(SuitCommmands command, int amount){
+bool Suit::sCommand(unsigned int command, unsigned int amount = 0){
 	//ugh, here we go
-	switch(command){
-		case cShot:
-		{
-			//play hit animation, subtract health, pause?
-			if(!isDead){
+	//enumeration statments used to make decoding IR easier on me
+	//don't have to look at numbers, and it's self documneting!
+	if (command == cShot) {
+		//play hit animation, subtract health, pause?
+		if (!isDead) {
 #if HIT_DELAY > 0
-				delayMicroseconds(MHitDelay(HIT_DELAY)); //hit delay function turns hit delay myByte into seconds
+			delayMicroseconds(MHitDelay(HIT_DELAY)); //hit delay function turns hit delay myByte into seconds
 #endif
-				if(currentArmor <= 0){
-					currentHealth-= amount;
-				}
-				else{
-					currentArmor -= amount;
-					currentHealth -= amount/2;
-				}
-				#ifdef DEBUG
-				Serial.print("Hit! Damage was: ");
-				Serial.println(amount);
-				#endif
-				#ifdef VERBOSE_DEBUG
-				Serial.print("Current Health is: ");
-				Serial.println(currentHealth);
-				Serial.print("And armor is: ");
-				Serial.print(currentArmor);
-				Serial.println("");
-				#endif
+			if (currentArmor <= 0) {
+				currentHealth -= amount;
+			}
+			else {
+				currentArmor -= amount;
+				currentHealth -= amount / 2;
+			}
+#ifdef DEBUG
+			Serial.print("Hit! Damage was: ");
+			Serial.println(amount);
+#endif
+#ifdef VERBOSE_DEBUG
+			Serial.print("Current Health is: ");
+			Serial.println(currentHealth);
+			Serial.print("And armor is: ");
+			Serial.print(currentArmor);
+			Serial.println("");
+#endif
 #if ON_HIT == true
-				onHit();
+			onHit();
 #endif
-				display.playLights(pLightsHit);
-			}
-			#ifdef DEBUG
-			else{
-				Serial.println("Hit, but very dead!");
-			}
-			#endif
+			display.playLights(pLightsHit);
 		}
-		break;
-		case cAddHealth:
-		{
-			currentHealth+=amount;
-			//display.playLights(pLightsGameOn);
+#ifdef DEBUG
+		else {
+			Serial.println("Hit, but very dead!");
 		}
-		break;
-		case cAddAmmo:
-		{
-			gunCommand(gAddAmmo, amount);
-			//display.playLights(pLightsGameOn);
-		}
-		break;
+#endif
+	}
+	else if (command == cSpecialCommand || command < 126) { //MT2Proto drives me nuts
+		unsigned int switcher;
+		if (command > 126) switcher = amount;
+		else switcher = command;
+		switch (switcher) {
 		case cKill:
 		{
-			isDead=true;
+			isDead = true;
 #if USE_STATS == true
-			stat.addValue(sDeath,1);
+			stat.addValue(sDeath, 1);
 #endif
-			gunCommand(gStop,0);
+			gunCommand(gStop, 0);
 			display.playLights(pLightsDead);
-			while(display.update()){}
+			while (display.update()) {}
 			display.playIdle();
-			display.changeValues(0,0,0);
-			display.update(); //no health left!
+			display.changeValues(0, 0, 0);
 #if ON_DEATH == true
 			onDeath();
 #endif
@@ -1125,25 +976,25 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cStartGame:
 		{
-			if(!respawns){
+			if (!respawns) {
 				//varibles! yay!
 #if START_DELAY > 0
 				delay(START_DELAY);
 #endif
-				respawns=RESPAWN_ALLOWED;
-				currentHealth=milesHealth(startHealth);
-				currentArmor=armor;
-				isDead=false;
-				gunCommand(gFullAmmo,0);
+				respawns = RESPAWN_ALLOWED;
+				currentHealth = milesHealth(startHealth);
+				currentArmor = armor;
+				isDead = false;
+				gunCommand(gFullAmmo, 0);
 				display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
 				display.playLights(pLightsGameOn);
-				while(display.update()){}
+				while (display.update()) {}
 #if ON_GAME_START == true
 				onGameStart();
 #endif
-				#ifdef DEBUG
+#ifdef DEBUG
 				Serial.println("Game started!");
-				#endif
+#endif
 			}
 		}
 		break;
@@ -1195,11 +1046,11 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cINewGame:
 		{
-			respawns=RESPAWN_ALLOWED;
-			currentHealth=milesHealth(startHealth);
-			currentArmor=armor;
-			isDead=false;
-			gunCommand(gFullAmmo,0);
+			respawns = RESPAWN_ALLOWED;
+			currentHealth = milesHealth(startHealth);
+			currentArmor = armor;
+			isDead = false;
+			gunCommand(gFullAmmo, 0);
 			display.reset();
 #if ON_GAME_START == true
 			onGameStart();
@@ -1209,14 +1060,14 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cFullAmmo:
 		{
-			gunCommand(gFullAmmo,0);
+			gunCommand(gFullAmmo, 0);
 			display.playPew();
 		}
 		break;
 		case cEndGame:
 		{
-			gunCommand(gStop,0);
-			isDead=true;
+			gunCommand(gStop, 0);
+			isDead = true;
 			respawns = false;
 #if ON_GAME_END == true
 			onGameEnd();
@@ -1233,11 +1084,11 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cExplodePlayer:
 		{
-			isDead=true;
+			isDead = true;
 #if USE_STATS == true
-			stat.addValue(sDeath,1);
+			stat.addValue(sDeath, 1);
 #endif
-			gunCommand(gStop,0);
+			gunCommand(gStop, 0);
 #if ON_DEATH == true
 			onDeath();
 #endif
@@ -1251,13 +1102,13 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cFullHealth:
 		{
-			currentHealth=milesHealth(startHealth);
+			currentHealth = milesHealth(startHealth);
 			display.playLights(pLightsGameOn);
 		}
 		break;
 		case cFullArmor:
 		{
-			currentArmor=armor;
+			currentArmor = armor;
 			display.playLights(pLightsGameOn);
 		}
 		break;
@@ -1276,30 +1127,61 @@ void Suit::sCommand(SuitCommmands command, int amount){
 		break;
 		case cStun:
 		{
-			gunCommand(gStop,0);
+			gunCommand(gStop, 0);
 			display.playLights(pLightsHit);
 			delay(2500);
 		}
 		break;
 		case cDisarm:
 		{
-			gunCommand(gStop,0);
+			gunCommand(gStop, 0);
 			display.playLights(pLightsHit);
 			delay(2500);
 		}
 		break;
-		case cNull:
+		default:
 		{
-			#ifdef DEBUG
-			Serial.println("null command recieved");
-			#endif
+#ifdef DEBUG
+			Serial.println("Unknown command recieved (1)");
+#endif
+			return false;
 		}
 		break;
-		
+		}
 	}
+	else {
+		switch (command) {
+		case cAddHealth:
+		{
+			currentHealth += amount;
+			//display.playLights(pLightsGameOn);
+		}
+		break;
+		case cAddAmmo:
+		{
+			gunCommand(gAddAmmo, amount);
+			//display.playLights(pLightsGameOn);
+		}
+		break;
+		case cObj:
+		{
+			//do later
+		}
+		break;
+		default:
+		{
+#ifdef DEBUG
+			Serial.println("Unknown command recieved (2)");
+#endif
+			return false;
+		}
+		break;
+		}
+	}
+	return true;
 }
 
-bool Suit::gunCommand(GunCommands command, int amount){
+bool Suit::gunCommand(GunCommands command, int amount = 0){
 	switch(command){
 		case gStop:
 		{
@@ -1460,43 +1342,35 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		packet outPacket;
 		outPacket.data1=0;
 		outPacket.data2=0;
-		int counter=15;
-		int i=0;
-		while((results.rawbuf[i]<IR_BURST_HEADER||results.rawbuf[i]>IR_BURST_UPPER)&&i<results.rawlen){
-			i++;
-		}
+		unsigned int counter=15;
 		#ifdef VERBOSE_DEBUG
 		Serial.println("Raw Packet:");
-		for(int o=i; o<results.rawlen; o++){
+		for(unsigned int o=1; o<results.rawlen; o++){
 			Serial.print(results.rawbuf[o]);
 			Serial.print(", ");
 		}
 		Serial.println("");
 		#endif
-		for(; i<results.rawlen && counter>=0; i+=2){
-			switch(decodePulse(results.rawbuf[i])){
-				case 0:
-				if(counter<8 && counter >= 0){
-					outPacket.data2.flip(counter,0);
+		for(unsigned int i=1; i<results.rawlen && counter>=0; i+=2){
+			if (decodePulse(results.rawbuf[i]) == 0) {
+				if (counter<8 && counter >= 0) {
+					outPacket.data2.flip(counter, 0);
 					counter--;
 				}
-				else if(counter<16){
-					outPacket.data1.flip(counter-8,0);
+				else if (counter<16) {
+					outPacket.data1.flip(counter - 8, 0);
 					counter--;
 				}
-				break;
-				case 1:
-				if(counter<8 && counter >= 0){
-					outPacket.data2.flip(counter,1);
+			}
+			else if(decodePulse(results.rawbuf[i]) == 1){
+				if (counter<8 && counter >= 0) {
+					outPacket.data2.flip(counter, 1);
 					counter--;
 				}
-				else if(counter<16){
-					outPacket.data1.flip(counter-8,1);
+				else if (counter<16) {
+					outPacket.data1.flip(counter - 8, 1);
 					counter--;
 				}
-				break;
-				default:
-				break;
 			}
 		}
 		/*

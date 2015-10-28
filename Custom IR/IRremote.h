@@ -38,7 +38,7 @@ public:
   unsigned long value; // Decoded value
   int bits; // Number of bits in decoded value
   volatile unsigned int *rawbuf; // Raw intervals in .5 us ticks
-  int rawlen; // Number of records in rawbuf.
+  unsigned int rawlen; // Number of records in rawbuf.
 };
 
 // Values for decode_type

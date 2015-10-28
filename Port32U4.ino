@@ -38,7 +38,6 @@ void setup() {
 	digitalWrite(13, HIGH);
 	delay(5000);
 	digitalWrite(13, LOW);
-	laser.sCommand(cStartGame, 0);
 #if CUSTOM_WEAPONS == true
 	laser.switchGun(DEFAULT_GUN);
 #endif
@@ -46,6 +45,7 @@ void setup() {
 
 
 void loop() {
+	/*
 	if (millis() - lastTime > 200) {
 		
 		if (!laser.gunCommand(gShoot, 0) && !laser.isDead) {
@@ -58,7 +58,6 @@ void loop() {
 #endif
 		lastTime = millis();
 	}
-	if (laser.checkStatus()) {
-		laser.sCommand(cRespawn, 0);
-	}
+	*/
+	laser.checkStatus();
 }
