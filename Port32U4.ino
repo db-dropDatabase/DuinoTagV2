@@ -7,7 +7,7 @@ using namespace Sounds;
 Suit laser;
 IRrecv recver(recievePin);  // I KNOW I SPELLED IT WRONG
 decode_results results;
-long int lastTime = 0;
+unsigned long int lastTime = 0;
 
 void setup() {
 #ifdef DEBUG
@@ -41,11 +41,12 @@ void setup() {
 #if CUSTOM_WEAPONS == true
 	laser.switchGun(DEFAULT_GUN);
 #endif
+	laser.sCommand(cStartGame,0);
 }
 
 
 void loop() {
-	/*
+	
 	if (millis() - lastTime > 200) {
 		
 		if (!laser.gunCommand(gShoot, 0) && !laser.isDead) {
@@ -58,6 +59,5 @@ void loop() {
 #endif
 		lastTime = millis();
 	}
-	*/
 	laser.checkStatus();
 }

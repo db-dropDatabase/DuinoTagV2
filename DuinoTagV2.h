@@ -18,7 +18,7 @@
 #define myByte unsigned int
 
 #define sPacketLength 29 
-const int frequency = 56;
+const unsigned int frequency = 56;
 #define IR_BURST_UPPER 60 //numbers to turn raw lengths of IR into signal, probably don't mess with them
 #define IR_BURST_HEADER 40
 #define IR_BURST_ONE 20
@@ -36,10 +36,10 @@ class Lasergun;
 class IRrecv;
 class IRsend;
 double MHitDelay(myByte in);
-int milesHealth(myByte health);
-int milesRPM(myByte rpm);
-int milesDamage(myByte damageIn);
-int decodePulse(int pulseLength);
+unsigned int milesHealth(myByte health);
+unsigned int milesRPM(myByte rpm);
+unsigned int milesDamage(myByte damageIn);
+unsigned int decodePulse(int pulseLength);
 /*--MARIMOLE-DEF_END--*/
 //sorry, but it has to be done...
 class Bitshift{
@@ -146,7 +146,7 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		bool playLights(const lightControl * command);
 		void pause();
 		void reset();
-		void setup(int maxHealth, int maxAmmo, int maxArmor, myByte team); //initilizes pins, thats all
+		void setup(unsigned int maxHealth,unsigned int maxAmmo,unsigned int maxArmor, myByte team); //initilizes pins, thats all
 		bool update(); //used to not delay entire program if playing leds, just update when ready and change action
 		void changeValues(double aHealth, double aAmmo, double aArmor);
 		void playPew(); //pew needs to behave differently than other sounds, so yeah
@@ -155,16 +155,16 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		private:
 		const lightControl * commandBuffer[5];
 		bool lightCommand(const lightControl steps[15]);
-		int currentStep;
+		unsigned int currentStep;
 		bool idle;
 		bool paused;
 		bool delaying;
 		bool pewOverride;
 		bool newHealth;
 		bool newAmmo;
-		int soundDelay;
-		long long int lastTime;
-		long int lastPewTime;
+		unsigned int soundDelay;
+		unsigned long long int lastTime;
+		unsigned long int lastPewTime;
 		double aMaxHealth;
 		double healthDisp;
 		double aMaxAmmo;
@@ -175,6 +175,8 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		Adafruit_NeoPixel neopix;  //lights handled by neopixel library, these are indicator
 		Adafruit_NeoPixel left;  //these are left side team
 		Adafruit_NeoPixel right;
+
+		const uint32_t teamColors[4] = { neopix.Color(55,128,255), neopix.Color(255,0,0), neopix.Color(255,0,95), neopix.Color(255,128,0) }; //team colors, in a nice array to make things easier
 	};
 	//gonna use namespace instead of class b/c of library
 	//and really, sounds are global anyway
@@ -210,9 +212,9 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 #if USE_STATS == true
 	class Stats{
 		public:
-		int	calculate(statCommand command);
-		void returnHits(int * ray);
-		void addValue(statCommand command, int input);
+		unsigned int	calculate(statCommand command);
+		void returnHits(unsigned int * ray);
+		void addValue(statCommand command,unsigned  int input);
 		void reset();
 		Stats();
 		private:
@@ -229,7 +231,7 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		myByte teamID;
 		myByte startHealth; //value reference in code.cpp
 		myByte respawnTime; //in seconds
-		int armor; 
+		unsigned int armor; 
 		//bytes below are all part of a gamsettings thing, so I split them up, 0x00 is false and 0x01 is true
 		//part 2
 		bool respawns;  //enable respawns
@@ -256,7 +258,7 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		//functions or variables not included in table
 		unsigned int currentReload;
 		unsigned int shotPacket[30]; //for IRsend library, initilized in setuppacket
-		bool gunCommand(GunCommands, int amount);
+		bool gunCommand(GunCommands, unsigned int amount);
 #if CUSTOM_WEAPONS == true
 		void switchGun(gunProfile newGun);
 #endif
@@ -266,11 +268,11 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		unsigned int rpmDelay; //initialized in setup
 		gunProfile currentProfile;
 		gunProfile gunValues;
-		int currentClip;
-		int currentAmmo;
+		unsigned int currentClip;
+		unsigned int currentAmmo;
 		private:
 		void setUpPacket(); //called in setup
-		long int currentDelay;
+		signed long int currentDelay;
 		unsigned long int tmpTime;
 		
 		parsedPacket readPacket(packet packetYay);
@@ -296,10 +298,10 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		void onRespawn();
 #endif
 #if ON_OBJECTIVE_START== true
-		void onObjStart(int progress);
+		void onObjStart(unsigned int progress);
 #endif
 #if ON_OBJECTIVE_FINISH == true
-		void onObjFinish(int progress);
+		void onObjFinish(unsigned int progress);
 #endif
 #if ON_GAME_START == true
 		void onGameStart();

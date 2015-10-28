@@ -15,7 +15,7 @@ volatile Sounds::soundProp Sounds::currentSound;
 
 //miles library
 
-int milesDamage(myByte damageIn){
+unsigned int milesDamage(myByte damageIn){
 	//damage table shown below:
 	/*Value Damage dealt
 	0x00 1
@@ -88,19 +88,16 @@ int milesDamage(myByte damageIn){
 		break;
 	}
 }
-int milesRPM(myByte rpm){
+unsigned int milesRPM(myByte rpm){
 	return (rpm*50)+250;
 }
-int milesHealth(myByte health){
-	int in = health;
-	int out;
-	if(in <= 20){
-		out = in;
+unsigned int milesHealth(myByte health){
+	if(health <= 20){
+		return health;
 	}
 	else{
-		out = ((in-20)*5)+20;
+		return ((health-20)*5)+20;
 	}
-	return out;
 }
 double MHitDelay(myByte in){
 	double out;
@@ -124,7 +121,7 @@ double MHitDelay(myByte in){
 	return out;
 }
 //unrealted
-int decodePulse(int pulseLength){
+unsigned int decodePulse(int pulseLength){
 	if(pulseLength > IR_BURST_UPPER){
 		#ifdef DEBUG
 		Serial.println("Recieved too long pulse!");
@@ -167,7 +164,7 @@ I think
 //int micros(); //used as a temporary substitution for the arduino function
 
 //cpp
-void Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
+void Arduino::setup(unsigned int smaxHealth,unsigned int smaxAmmo,unsigned int smaxArmor, myByte team){
 	pinMode(muzzlePin, OUTPUT);
 	pinMode(leftPin, OUTPUT);
 	pinMode(rightPin, OUTPUT);
@@ -185,30 +182,9 @@ void Arduino::setup(int smaxHealth, int smaxAmmo, int smaxArmor, myByte team){
 	left.setBrightness(32);
 	right.setBrightness(32);
 	
-	for(int i=0; i<8; i++){
-		switch(team){
-			case 0:
-			left.setPixelColor(i, 55, 128, 255);
-			right.setPixelColor(i, 55, 128, 255);
-			break;
-			case 1:
-			left.setPixelColor(i, 255, 0, 0);
-			right.setPixelColor(i, 255, 0, 0);
-			break;
-			case 2:
-			left.setPixelColor(i,255,0,95);
-			right.setPixelColor(i,255,0,95);
-			break;
-			case 3:
-			left.setPixelColor(i,255,128,0);
-			right.setPixelColor(i,255,128,0);
-			break;
-			default:
-			#ifdef DEBUG
-			Serial.println("bad teamID parsed");
-			#endif
-			break;
-		}
+	for(unsigned int i=0; i<8; i++){
+		left.setPixelColor(i, teamColors[team]);
+		right.setPixelColor(i, teamColors[team]);
 	}
 	left.show();
 	right.show();
@@ -227,19 +203,13 @@ void Arduino::playIdle(){
 }
 
 bool Arduino::playLights(const lightControl * command){
-	bool check=false;
-	for(int i=0; i<5&&!check; i++){
+	for(unsigned int i=0; i<5; i++){
 		if(commandBuffer[i]==NULL){
 			commandBuffer[i]=command;
-			check=true;
+			return true;
 		}
 	}
-	if(check){
-		return true;
-	}
-	else{
-		return false;
-	}
+	return false;
 }
 bool Arduino::lightCommand(const lightControl steps[15]){
 	switch(steps[currentStep]){
@@ -367,7 +337,7 @@ void Arduino::reset(){
 	newAmmo=false;
 	pewOverride=false;
 	idle=false;
-	for(int i=0; i<5; i++){
+	for(unsigned int i=0; i<5; i++){
 		commandBuffer[i] = NULL;
 	}
 	Sounds::reset();
@@ -475,7 +445,7 @@ bool Arduino::update(){
 		return false;
 	}
 	if(lightCommand(commandBuffer[0])){
-		for(int i=1; i<5; i++){
+		for(unsigned int i=1; i<5; i++){
 			commandBuffer[i-1]=commandBuffer[i];
 		}
 		commandBuffer[4] = NULL;
@@ -615,7 +585,7 @@ void Suit::setUpPacket(){
 	packet = (playerID * 64) + (teamID * 16) + currentProfile.damage;
 	#ifdef DEBUG
 	Serial.println("String Packet: ");
-	for(int i=0; i<13; i++){
+	for(unsigned int i=0; i<13; i++){
 		Serial.print(packet.grab(i));
 		Serial.print(", ");
 	}
@@ -625,8 +595,8 @@ void Suit::setUpPacket(){
 	shotPacket[1] = 600; //first space
 	shotPacket[2] = 600; //first zero to say shot packet
 	shotPacket[3] = 600; //secound space
-	int bitcounter=11;
-	for(int i=4; i<30&&bitcounter>=0; i++){
+	unsigned int bitcounter=11;
+	for(unsigned int i=4; i<30&&bitcounter>=0; i++){
 		if(!(i & 1)){ //alternating
 			if(packet.grab(bitcounter)==false){
 				shotPacket[i] = 600; //0
@@ -649,8 +619,8 @@ void Suit::waitForSetup(IRrecv * showMe){
 	decode_results resulters;
 	while(!check){
 		if(showMe->decode(&resulters)){
-			int counter2=0;
-			int i=0;
+			unsigned int counter2=0;
+			unsigned int i=0;
 			while((resulters.rawbuf[i]<40||resulters.rawbuf[i]>60)&&i<resulters.rawlen){
 				i++;
 			}
@@ -674,11 +644,11 @@ void Suit::waitForSetup(IRrecv * showMe){
 				boolCheck=0;
 				unsigned int total=0;
 				unsigned int u=0;
-				for(int o=60; o>52; o--){
+				for(unsigned int o=60; o>52; o--){
 					boolCheck.flip(u,raw[o]);
 					u++;
 				}
-				for(int o=0; o<53; o++){
+				for(unsigned int o=0; o<53; o++){
 					if(raw[o]){
 						total++;
 					}
@@ -692,7 +662,7 @@ void Suit::waitForSetup(IRrecv * showMe){
 					Serial.println(total);
 					Serial.print(boolCheck.store);
 					Serial.println("");
-					for(int i=0; i<61; i++){
+					for(unsigned int i=0; i<61; i++){
 						Serial.print(raw[i]);
 					}
 					Serial.println("");
@@ -712,49 +682,48 @@ void Suit::waitForSetup(IRrecv * showMe){
 	//transfer raw to values
 	{
 		Bitshift temp;
-		int pointer=0;
-		for(int i=1; i>=0; i--){
+		unsigned int pointer=0;
+		for(unsigned int i=1; i>=0; i--){
 			temp.flip(i, raw[pointer]);
 			pointer++;
 		}
 		Bitshift temp2;
-		for(int i=6; i>=0; i--){
+		for(unsigned int i=6; i>=0; i--){
 			temp2.flip(i, raw[pointer]);
 			pointer++;
 		}
 		
 		Bitshift temp3;
 		
-		for(int i=7; i>=0; i--){
+		for(unsigned int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
 		gunValues.damage=temp3.store;
 		
-		for(int i=7; i>=0; i--){
+		for(unsigned int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
 		gunValues.clipSize=temp3.store;
-		for(int i=7; i>=0; i--){
+		for(unsigned int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
 		gunValues.clipNum=temp3.store;
-		for(int i=7; i>=0; i--){
+		for(unsigned int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
 		startHealth=temp3.store;
-		for(int i=7; i>=0; i--){
+		for(unsigned int i=7; i>=0; i--){
 			temp3.flip(i, raw[pointer]);
 			pointer++;
 		}
-		int randomInt=pointer;
+		unsigned int randomInt=pointer;
 		armor=temp3.store;
 		Bitshift temp8;
-		temp8=0;
-		for(int i=3; i>=0; i--){
+		for(unsigned int i=3; i>=0; i--){
 			temp8.flip(i, raw[pointer]);
 			pointer++;
 		}
@@ -764,7 +733,7 @@ void Suit::waitForSetup(IRrecv * showMe){
 		#ifdef VERBOSE_DEBUG
 		
 		Serial.print("Armor bits: ");
-		for(int i=randomInt-8; i<randomInt; i++){
+		for(unsigned int i=randomInt-8; i<randomInt; i++){
 			Serial.print(raw[i]);
 		}
 		
@@ -834,13 +803,13 @@ Suit::Suit(void){
 parsedPacket Suit::readPacket(packet packetYay){
 	#ifdef DEBUG
 	Serial.println("The packet is as follows: ");
-	for(int i=7; i>=0; i--){
+	for(unsigned int i=7; i>=0; i--){
 		Serial.print(packetYay.data1.grab(i));
 		Serial.print(", ");
 	}
 	Serial.println("");
 	Serial.println("Part 2: ");
-	for(int i=7; i>=0; i--){
+	for(unsigned int i=7; i>=0; i--){
 		Serial.print(packetYay.data2.grab(i));
 		Serial.print(", ");
 	}
@@ -1022,7 +991,7 @@ bool Suit::sCommand(unsigned int command, unsigned int amount = 0){
 				Serial.println("Respawn!");
 #endif
 #if RESPAWN_TIME > 0
-				long int timeHold = millis();
+				unsigned long int timeHold = millis();
 				while (millis() - timeHold < respawnTime * 1000) checkStatus();
 #endif
 				isDead = false;
@@ -1181,7 +1150,7 @@ bool Suit::sCommand(unsigned int command, unsigned int amount = 0){
 	return true;
 }
 
-bool Suit::gunCommand(GunCommands command, int amount = 0){
+bool Suit::gunCommand(GunCommands command, unsigned int amount = 0){
 	switch(command){
 		case gStop:
 		{
@@ -1264,8 +1233,8 @@ bool Suit::gunCommand(GunCommands command, int amount = 0){
 				Serial.println(currentReload);
 				Serial.println(currentProfile.reload);
 				#endif
-				long int lastTime=millis();
-				int reloadStatus=0;
+				unsigned long int lastTime=millis();
+				unsigned int reloadStatus=0;
 				while(currentReload>0){
 					if(millis()-lastTime>100){
 						lastTime=millis();
@@ -1340,8 +1309,6 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	decode_results results;
 	if(recv->decode(&results)){
 		packet outPacket;
-		outPacket.data1=0;
-		outPacket.data2=0;
 		unsigned int counter=15;
 		#ifdef VERBOSE_DEBUG
 		Serial.println("Raw Packet:");
@@ -1375,7 +1342,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 		}
 		/*
 		if(counter < 0){
-			int otherInt=7;
+			unsigned int otherInt=7;
 			//verify message terminator
 			bool terminator[8];
 			for(; i<results.rawlen && counter>=0; i+=2){
@@ -1395,7 +1362,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 			if(boolToInt(terminator) != 0xe8){
 				#ifdef DEBUG
 				Serial.println("Terminators do not match!");
-				for(int i=0; i<8; i++){
+				for(unsigned int i=0; i<8; i++){
 					Serial.print(terminator[i]);
 				}
 				#endif
@@ -1430,7 +1397,7 @@ bool Suit::checkStatus() { //this function will return is the user is dead, but 
 	}
 	if(currentHealth<1 && !isDead){
 #if DEATH_DELAY > 0
-		long int timeHold = millis();
+		long unsigned int timeHold = millis();
 		while (millis() - timeHold > DEATH_DELAY * 1000) display.update();
 #endif
 		display.playLights(pLightsDead);
@@ -1460,7 +1427,7 @@ Stats::Stats(){
 }
 
 void Stats::reset(){
-	for(int i=0; i<127; i++){
+	for(unsigned int i=0; i<127; i++){
 		hitCount[i]=0;
 	}
 	deathCount=0;
@@ -1468,7 +1435,7 @@ void Stats::reset(){
 	reloadCount=0;
 }
 
-int Stats::calculate(statCommand command){
+unsigned int Stats::calculate(statCommand command){
 	switch(command){
 		case sShot:
 		return shotCount;
@@ -1485,13 +1452,13 @@ int Stats::calculate(statCommand command){
 	}
 }
 
-void Stats::returnHits(int * ray){
-	for(int i=0; i<127; i++){
+void Stats::returnHits(unsigned int * ray){
+	for(unsigned int i=0; i<127; i++){
 		ray[i] = hitCount[i];
 	}
 }
 
-void Stats::addValue(statCommand command, int input){
+void Stats::addValue(statCommand command, unsigned int input){
 	switch(command){
 		case sShot:
 		shotCount+=input;
