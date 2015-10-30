@@ -1,7 +1,7 @@
 /* File automatically created by MariaMole */
 //#define DEBUG
-#include <DuinoTagV2.h>
 
+#include <DuinoTagV2.h>
 using namespace Sounds;
 
 Suit laser;
@@ -46,7 +46,6 @@ void setup() {
 
 
 void loop() {
-	
 	if (millis() - lastTime > 200) {
 		
 		if (!laser.gunCommand(gShoot, 0) && !laser.isDead) {

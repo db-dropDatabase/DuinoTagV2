@@ -427,6 +427,10 @@ ISR(TIMER_INTR_NAME)
       BLINKLED_OFF();  // turn pin 13 LED off
     }
   }
+  //this is me, duinotag maker, hijacking IRremote's ISR to play sound
+
+
+
 }
 
 void IRrecv::resume() {
