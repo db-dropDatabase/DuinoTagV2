@@ -2,140 +2,7 @@
 #define DUINOTAGV2_CPP
 
 #include <DuinoTagV2.h>
-
-//used to remove some compilier optimization
-//hopefully
-
-//miles library
-
-unsigned int milesDamage(myByte damageIn){
-	//damage table shown below:
-	/*Value Damage dealt
-	0x00 1
-	0x01 2
-	0x02 4
-	0x03 5
-	0x04 7
-	0x05 10
-	0x06 15
-	0x07 17
-	0x08 20
-	0x09 25
-	0x0A 30
-	0x0B 35
-	0x0C 40
-	0x0D 50
-	0x0E 75
-	0x0F 100*/
-	switch(damageIn) {
-		case 0:
-		return 1;
-		break;
-		case 1:
-		return 2;
-		break;
-		case 2:
-		return 4;
-		break;
-		case 3:
-		return 5;
-		break;
-		case 4:
-		return 7;
-		break;
-		case 5:
-		return 10;
-		break;
-		case 6:
-		return 15;
-		break;
-		case 7:
-		return 17;
-		break;
-		case 8:
-		return 20;
-		break;
-		case 9:
-		return 25;
-		break;
-		case 10:
-		return 30;
-		break;
-		case 11:
-		return 35;
-		break;
-		case 12:
-		return 40;
-		break;
-		case 13:
-		return 50;
-		break;
-		case 14:
-		return 75;
-		break;
-		case 15:
-		return 100;
-		break;
-		default:
-		return 0;
-		break;
-	}
-}
-unsigned int milesRPM(myByte rpm){
-	return (rpm*50)+250;
-}
-unsigned int milesHealth(myByte health){
-	if(health <= 20){
-		return health;
-	}
-	else{
-		return ((health-20)*5)+20;
-	}
-}
-double MHitDelay(myByte in){
-	double out;
-	switch(in){
-		case 0:
-		out=0;
-		break;
-		case 1:
-		out=0.25;
-		break;
-		case 2:
-		out=0.5;
-		break;
-		case 3:
-		out=0.75;
-		break;
-		default:
-		out=(in-3.0);
-		break;
-	}
-	return out;
-}
-//unrealted
-unsigned int decodePulse(int pulseLength){
-	if(pulseLength > IR_BURST_UPPER){
-		#ifdef DEBUG
-		Serial.println("Recieved too long pulse!");
-		#endif //debug
-		return -1;
-	}
-	else if(pulseLength > IR_BURST_HEADER){
-		return -2;
-	}
-	else if(pulseLength > IR_BURST_ONE){
-		return 1;
-	}
-	else if(pulseLength > IR_BURST_ZERO){
-		return 0;
-	}
-	else{
-		return -1;
-	}
-}
 //duinotag
-//header
 
 /*
 I'm thinking of having a set of instructions for each command, and when update() is called follow the instructions
@@ -157,14 +24,14 @@ I think
 //int micros(); //used as a temporary substitution for the arduino function
 
 //cpp
-void Arduino::setup(unsigned int smaxHealth,unsigned int smaxAmmo,unsigned int smaxArmor, myByte team){
+void Arduino::setup(unsigned int smaxHealth,unsigned int smaxAmmo,unsigned int smaxArmor, myByte iTeam){
 	pinMode(muzzlePin, OUTPUT);
 	pinMode(leftPin, OUTPUT);
 	pinMode(rightPin, OUTPUT);
 	pinMode(hitPin, OUTPUT);
 	pinMode(buzzerPin, OUTPUT);
 	neopix = Adafruit_NeoPixel(16, neoPin, NEO_GRB + NEO_KHZ800); 
-	left = Adafruit_NeoPixel(8/*?*/, leftPin, NEO_GRB + NEO_KHZ800);
+	left = Adafruit_NeoPixel(8, leftPin, NEO_GRB + NEO_KHZ800);
 	right = Adafruit_NeoPixel(8, rightPin, NEO_GRB + NEO_KHZ800);
 	
 	neopix.begin();
@@ -186,6 +53,7 @@ void Arduino::setup(unsigned int smaxHealth,unsigned int smaxAmmo,unsigned int s
 	aMaxHealth=smaxHealth;
 	aMaxAmmo=smaxAmmo;
 	aMaxArmor=smaxArmor;
+	team = iTeam;
 	
 }
 void Arduino::playIdle(){
@@ -204,7 +72,7 @@ bool Arduino::playLights(const lightControl * command){
 	}
 	return false;
 }
-bool Arduino::lightCommand(const lightControl steps[15]){
+bool Arduino::lightCommand(const lightControl steps[]){
 	switch(steps[currentStep]){
 		case allOff:
 		digitalWrite(muzzlePin, LOW);
@@ -231,16 +99,24 @@ bool Arduino::lightCommand(const lightControl steps[15]){
 		digitalWrite(hitPin, LOW);
 		break;
 		case rightOn:
-		digitalWrite(rightPin, HIGH);
+			for (unsigned int i = 0; i < 8; i++) {
+				right.setPixelColor(i, teamColors[team]);
+			}
+			right.show();
 		break;
 		case rightOff:
-		digitalWrite(rightPin, LOW);
+			right.clear();
+			right.show();
 		break;
 		case leftOn:
-		digitalWrite(leftPin, HIGH);
+			for (unsigned int i = 0; i < 8; i++) {
+				left.setPixelColor(i, teamColors[team]);
+			}
+			left.show();
 		break;
 		case leftOff:
-		digitalWrite(leftPin, LOW);
+			left.clear();
+			left.show();
 		break;
 		case Tdelay:
 		if(!delaying){
@@ -420,7 +296,6 @@ bool Arduino::update(){
 		newAmmo=false;
 		neopix.show();
 	}
-	//check for delay
 	if(paused){
 		if(idle && millis()-lastTime>500){
 			left.clear();
@@ -437,17 +312,19 @@ bool Arduino::update(){
 		}
 		return false;
 	}
-	if(lightCommand(commandBuffer[0])){
-		for(unsigned int i=1; i<5; i++){
-			commandBuffer[i-1]=commandBuffer[i];
+	else {
+		if (lightCommand(commandBuffer[0])) {
+			for (unsigned int i = 1; i<5; i++) {
+				commandBuffer[i - 1] = commandBuffer[i];
+			}
+			commandBuffer[4] = NULL;
+			currentStep = 0;
 		}
-		commandBuffer[4] = NULL;
-		currentStep=0;
-	}
-	if (lastPewTime > 0) {
-		if (millis() - lastPewTime > constDelay/4) {
-			lastPewTime = 0;
-			digitalWrite(muzzlePin, LOW);
+		if (lastPewTime > 0) {
+			if (millis() - lastPewTime > constDelay / 4) {
+				lastPewTime = 0;
+				digitalWrite(muzzlePin, LOW);
+			}
 		}
 	}
 	if(commandBuffer[0]==NULL){
@@ -730,15 +607,15 @@ Suit::Suit(void){
 }
 
 parsedPacket Suit::readPacket(packet packetYay){
-	#ifdef DEBUG
+	#ifdef VEBOSE_DEBUG
 	Serial.println("The packet is as follows: ");
-	for(unsigned int i=7; i>=0; i--){
+	for(uint8_t i=7; i>=0; i--){
 		Serial.print(packetYay.data1.grab(i));
 		Serial.print(", ");
 	}
 	Serial.println("");
 	Serial.println("Part 2: ");
-	for(unsigned int i=7; i>=0; i--){
+	for(uint8_t i=7; i>=0; i--){
 		Serial.print(packetYay.data2.grab(i));
 		Serial.print(", ");
 	}
@@ -1046,6 +923,9 @@ bool Suit::sCommand(unsigned int command, unsigned int amount = 0){
 		}
 		break;
 		}
+#if ON_CUSTOM_EVENT == true
+		if (CUSTOM_EVENT == switcher) onCustomEvent();
+#endif
 	}
 	else {
 		switch (command) {
@@ -1063,7 +943,9 @@ bool Suit::sCommand(unsigned int command, unsigned int amount = 0){
 		break;
 		case cObj:
 		{
-			//do later
+#if ON_OBJECTIVE == true
+			onObj(command);
+#endif
 		}
 		break;
 		default:
@@ -1075,6 +957,9 @@ bool Suit::sCommand(unsigned int command, unsigned int amount = 0){
 		}
 		break;
 		}
+#if ON_CUSTOM_EVENT == true
+		if (CUSTOM_EVENT == command) onCustomEvent();
+#endif
 	}
 	return true;
 }

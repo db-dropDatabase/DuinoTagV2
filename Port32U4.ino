@@ -58,5 +58,5 @@ void loop() {
 #endif
 		lastTime = millis();
 	}
-	laser.checkStatus();
+	if (laser.checkStatus()) laser.sCommand(cRespawn, 0);
 }

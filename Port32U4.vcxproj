@@ -74,7 +74,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;C:\Users\Noah\Documents\Arduino\hardware\sparkfun\avr\variants\promicro;C:\Users\Noah\Documents\code\lasertag\lasertag\Github;C:\Program Files (x86)\Arduino\libraries;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\hardware\avr\1.6.8\libraries;C:\Users\Noah\Documents\Arduino\hardware\sparkfun\avr\libraries;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\dmcbnpl3.xus\Micro Platforms\default\debuggers;C:\Users\Noah\Documents\Arduino\libraries;C:\Users\Noah\Documents\code\lasertag\lasertag\Github;C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;C:\Users\Noah\Documents\Arduino\hardware\sparkfun\avr\variants\promicro;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\tools\avr-gcc\4.8.1-arduino5/avr/include/;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\tools\avr-gcc\4.8.1-arduino5//avr/include/avr/;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\tools\avr-gcc\4.8.1-arduino5/lib\gcc\avr\4.8.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files (x86)\Arduino\hardware\arduino\avr\cores\arduino;C:\Users\Noah\Documents\Arduino\hardware\sparkfun\avr\variants\promicro;C:\Users\Noah\Documents\code\lasertag\lasertag\Github;C:\Program Files (x86)\Arduino\libraries;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\hardware\avr\1.6.8\libraries;C:\Users\Noah\Documents\Arduino\hardware\sparkfun\avr\libraries;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\Extensions\y4hspou4.gex\Micro Platforms\default\debuggers;C:\Users\Noah\Documents\Arduino\libraries;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\tools\avr-gcc\4.8.1-arduino5/avr/include/;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\tools\avr-gcc\4.8.1-arduino5//avr/include/avr/;C:\Users\Noah\AppData\Roaming\arduino15\packages\arduino\tools\avr-gcc\4.8.1-arduino5/lib\gcc\avr\4.8.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>C:\Users\Noah\Documents\code\lasertag\lasertag\Github\__vm\.Github.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>true</IgnoreStandardIncludePath>
       <PreprocessorDefinitions>__AVR_ATmega32u4__;__AVR_ATmega32U4__;F_CPU=16000000L;ARDUINO=164;ARDUINO_AVR_PROMICRO16;ARDUINO_ARCH_AVR;USB_VID=0x1B4F;USB_PID=0x9206;USB_MANUFACTURER=;__cplusplus;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -130,6 +130,7 @@
     <ClCompile Include="Custom IR\IRremote.cpp" />
     <ClCompile Include="DuinoTagV2.cpp" />
     <ClCompile Include="FlexiTimer\FlexiTimer2.cpp" />
+    <ClCompile Include="MilesDecode.cpp" />
     <ClCompile Include="Neopixel\Adafruit_NeoPixel.cpp" />
     <ClCompile Include="GameMode.cpp" />
     <ClCompile Include="Sound.cpp" />
@@ -141,6 +142,7 @@
     <ClInclude Include="DuinoTagV2.h" />
     <ClInclude Include="FlexiTimer\FlexiTimer2.h" />
     <ClInclude Include="GameMode.h" />
+    <ClInclude Include="MilesDecode.h" />
     <ClInclude Include="Neopixel\Adafruit_NeoPixel.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="ToneAC\toneAC.h" />

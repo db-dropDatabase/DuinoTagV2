@@ -99,6 +99,8 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <Custom IR\IRremote.cpp>
 #include <Custom IR\IRremote.h>
 #include <Custom IR\IRremoteInt.h>
+#include <..\Github\MilesDecode.cpp>
+#include <..\Github\MilesDecode.h>
 #include <..\Github\Sound.cpp>
 #include <..\Github\Sound.h>
 #include <ToneAC\toneAC.cpp>

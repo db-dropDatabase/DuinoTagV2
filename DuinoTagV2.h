@@ -11,15 +11,12 @@
 
 #include <Sound.h>
 
+#include <MilesDecode.h>
+
 #define myByte unsigned int
 
 #define sPacketLength 29 
 const unsigned int frequency = 56;
-#define IR_BURST_UPPER 60 //numbers to turn raw lengths of IR into signal, probably don't mess with them
-#define IR_BURST_HEADER 40
-#define IR_BURST_ONE 20
-#define IR_BURST_ZERO 8
-
 
 /*--MARIMOLE-DEF_BEGIN--*/
 void loop();
@@ -28,14 +25,8 @@ class Arduino;
 class Bitshift;
 class Suit;
 class Stats;
-class Lasergun;
 class IRrecv;
 class IRsend;
-double MHitDelay(myByte in);
-unsigned int milesHealth(myByte health);
-unsigned int milesRPM(myByte rpm);
-unsigned int milesDamage(myByte damageIn);
-unsigned int decodePulse(int pulseLength);
 /*--MARIMOLE-DEF_END--*/
 //sorry, but it has to be done...
 class Bitshift{
@@ -72,11 +63,11 @@ enum lightControl{
 };
 
 //below are command lists, and can be edited freely, use the commands above
-//const lightControl shoot[15] = {playPew}; not used after playPew function implemented
-const lightControl pLightsHit[15] = {hitOn,playHit,hitOff,over}; //set delay to 250 or something
-const lightControl pLightsGameOn[15] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay,rightOff,leftOff,over};
-const lightControl pLightsDead[15] = {hitOn,playDead,hitOff,over};
-const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
+//const lightControl shoot[] = {playPew}; not used after playPew function implemented
+const lightControl pLightsHit[] = {hitOn,playHit,hitOff,over}; //set delay to 250 or something
+const lightControl pLightsGameOn[] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay,over};
+const lightControl pLightsDead[] = {hitOn,playDead,hitOff,over};
+const lightControl pLightsGameOver[] = {allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
 	//is this cool or what?!
 
 	enum SuitCommmands {  //also includes message packet commands
@@ -142,7 +133,7 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		bool playLights(const lightControl * command);
 		void pause();
 		void reset();
-		void setup(unsigned int maxHealth,unsigned int maxAmmo,unsigned int maxArmor, myByte team); //initilizes pins, thats all
+		void setup(unsigned int maxHealth,unsigned int maxAmmo,unsigned int maxArmor, myByte iTeam); //initilizes pins, thats all
 		bool update(); //used to not delay entire program if playing leds, just update when ready and change action
 		void changeValues(double aHealth, double aAmmo, double aArmor);
 		void playPew(); //pew needs to behave differently than other sounds, so yeah
@@ -167,7 +158,8 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		double ammoDisp;
 		double aMaxArmor;
 		double armorDisp;
-		
+		uint8_t team;
+
 		Adafruit_NeoPixel neopix;  //lights handled by neopixel library, these are indicator
 		Adafruit_NeoPixel left;  //these are left side team
 		Adafruit_NeoPixel right;
@@ -225,19 +217,19 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 		//functions or variables not included in table
 		unsigned int currentReload;
 		unsigned int shotPacket[30]; //for IRsend library, initilized in setuppacket
-		bool gunCommand(GunCommands, unsigned int amount);
+		bool gunCommand(GunCommands command, unsigned int amount);
 #if CUSTOM_WEAPONS == true
 		void switchGun(gunProfile newGun);
 #endif
 		Arduino display;
 		IRrecv * recv;
 		bool checkStatus();
+		private:
 		unsigned int rpmDelay; //initialized in setup
 		gunProfile currentProfile;
 		gunProfile gunValues;
 		unsigned int currentClip;
 		unsigned int currentAmmo;
-		private:
 		void setUpPacket(); //called in setup
 		signed long int currentDelay;
 		unsigned long int tmpTime;
@@ -264,11 +256,8 @@ const lightControl pLightsGameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay
 #if ON_RESPAWN == true
 		void onRespawn();
 #endif
-#if ON_OBJECTIVE_START== true
-		void onObjStart(unsigned int progress);
-#endif
-#if ON_OBJECTIVE_FINISH == true
-		void onObjFinish(unsigned int progress);
+#if ON_OBJECTIVE == true
+		void onObj(unsigned int progress);
 #endif
 #if ON_GAME_START == true
 		void onGameStart();

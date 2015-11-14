@@ -44,15 +44,10 @@
 	}
 #endif
 
-#if ON_OBJECTIVE_START== true
-	void Suit::onObjStart(int progress) {
-
-	}
-#endif
-
-#if ON_OBJECTIVE_FINISH == true
-	void Suit::onObjFinish(int progress) {
-
+#if ON_OBJECTIVE == true
+	void Suit::onObj(unsigned int progress) {
+		//DO NOT USE NEGATIVE NUMBERS
+		//sorry, it's just better this way
 	}
 #endif
 
@@ -76,7 +71,7 @@
 
 #if ON_CUSTOM_EVENT == true
 	void Suit::onCustomEvent() {
-
+		Serial.println("Custom Event!");
 	}
 #endif
 
