@@ -31,7 +31,7 @@ class IRsend;
 //sorry, but it has to be done...
 class Bitshift{
 		public:
-		unsigned int store;
+		uint8_t store;
 		bool grab(unsigned int place);
 		Bitshift& operator= (const unsigned int &x);
 		void flip(unsigned int place, bool value);

@@ -26,15 +26,7 @@ volatile void Sounds::reset() {
 
 void Sounds::pause() {
 	if (!paused) {
-		currentFreq = 0;
-		currentSound.escalating = false;
-		currentSound.start = 0;
-		currentSound.end = 0;
-		currentSound.interval = 0;
-		currentSound.jump = 0;
-		playingSound = false;
-		FlexiTimer2::stop();
-		noToneAC();
+		reset();
 	}
 	paused = !paused;
 }
@@ -53,8 +45,8 @@ void Sounds::playSound(const soundProp sound) {
 		currentFreq = currentSound.start;
 		FlexiTimer2::set(1, (float)(currentSound.interval / 1000000), updateSound);
 		FlexiTimer2::start();
+		playingSound = true;
 	}
-	playingSound = true;
 }
 
 void Sounds::updateSound(void) { //technicly an ISR

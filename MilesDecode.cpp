@@ -72,7 +72,7 @@ unsigned int milesDamage(myByte damageIn) {
 		return 100;
 		break;
 	default:
-		return 0;
+		return 7;
 		break;
 	}
 }

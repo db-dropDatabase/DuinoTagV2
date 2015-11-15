@@ -32,7 +32,7 @@
 //#define VERBOSE_DEBUG
 
 //default values, will be overriden if IR setup is in place
-#define TEAM 0 //0-3
+#define TEAM 3 //0-3
 #define PLAYER_ID 0 //7 bit player ID, max 127
 #define HEALTH 0x24 //there is a weird table of values this has to conform to, so this would technicly be 100
 #define ARMOR 50

@@ -607,15 +607,15 @@ Suit::Suit(void){
 }
 
 parsedPacket Suit::readPacket(packet packetYay){
-	#ifdef VEBOSE_DEBUG
+	#ifdef DEBUG
 	Serial.println("The packet is as follows: ");
-	for(uint8_t i=7; i>=0; i--){
+	for(int i=7; i>=0; i--){
 		Serial.print(packetYay.data1.grab(i));
 		Serial.print(", ");
 	}
 	Serial.println("");
 	Serial.println("Part 2: ");
-	for(uint8_t i=7; i>=0; i--){
+	for(int i=7; i>=0; i--){
 		Serial.print(packetYay.data2.grab(i));
 		Serial.print(", ");
 	}
@@ -625,8 +625,7 @@ parsedPacket Suit::readPacket(packet packetYay){
 	if(!packetYay.data1.grab(7)){ //check very first (last?) bit for message type
 		//shot packet
 		//add stats here later
-		unsigned int tmpTeamID = 2*packetYay.data2.grab(7) + packetYay.data2.grab(6);
-		if(tmpTeamID == teamID){ //checks to see if shot by friend or foe, and if friendlyfire is on
+		if(packetYay.data2.store >> 4 == teamID){ //checks to see if shot by friend or foe, and if friendlyfire is on
 			//take damage, and if I make a stats machine record player Id
 			#ifdef DEBUG
 			Serial.println("teamID is the same as shooter teamid");
@@ -644,9 +643,12 @@ parsedPacket Suit::readPacket(packet packetYay){
 #endif
 		}
 		else{
-			packetYay.data2.flip(6,0);
-			packetYay.data2.flip(7,0);
-			superYay.amount= milesDamage(packetYay.data2.store/4); //grab the damage value, exclude the teamID, divide by 4 because damage isn't long enough to fill byte, and it leaves 2 zeros on the right side
+			packetYay.data2.store = packetYay.data2.store << 2;
+			superYay.amount = milesDamage(packetYay.data2.store>>4);
+#ifdef DEBUG
+			Serial.print("Thing! :");
+			Serial.println(packetYay.data2.store>>4);
+#endif
 			superYay.whatToDo=cShot;
 #if USE_STATS == true
 			stat.addValue(sHit, packetYay.data1.store);
