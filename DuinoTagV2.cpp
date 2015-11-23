@@ -370,8 +370,8 @@ void Arduino::reset(){
 	newAmmo=false;
 	pewOverride=false;
 	idle=false;
-	for(unsigned int i=0; i<5; i++){
-		commandBuffer[i] = pNull;
+	for(int i=0; i<5; i++){
+		commandBuffer[i] = null;
 	}
 	Sounds::reset();
 	noToneAC();
@@ -446,7 +446,7 @@ bool Arduino::update(){
 		neopix.show();
 	}
 	if(newAmmo){
-		#ifdef VERBOSE_DEBUG
+		#ifdef DEBUG
 		Serial.println("Updating ammo!");
 		#endif
 		for(double i=0; i<8.0; i++){
@@ -477,24 +477,43 @@ bool Arduino::update(){
 		}
 		return false;
 	}
-	else {
-		if (commandBuffer[0] != pNull) {
-			if (lightCommand(commandBuffer[0])) {
-				for (unsigned int i = 1; i<5; i++) {
-					commandBuffer[i - 1] = commandBuffer[i];
-				}
-				commandBuffer[4] = pNull;
-				currentStep = 0;
-			}
+	bool over = false;
+	switch(commandBuffer[0]){
+		case pLightsHit:
+		{
+			over = lightCommand(hit);
 		}
-		if (lastPewTime > 0) {
-			if (millis() - lastPewTime > constDelay / 4) {
-				lastPewTime = 0;
-				digitalWrite(muzzlePin, LOW);
-			}
+		break;
+		case pLightsGameOn:
+		{
+			over = lightCommand(gameOn);
+		}
+		break;
+		case pLightsDead:
+		{
+			over = lightCommand(dead);
+		}
+		break;
+		case pLightsGameOver:
+		{
+			over = lightCommand(gameOver);
+		}
+		break;
+	}
+	if(over){
+		for(int i=1; i<5; i++){
+			commandBuffer[i-1]=commandBuffer[i];
+		}
+		commandBuffer[4] = null;
+		currentStep=0;
+	}
+	if (lastPewTime > 0) {
+		if (millis() - lastPewTime > constDelay/4) {
+			lastPewTime = 0;
+			digitalWrite(muzzlePin, LOW);
 		}
 	}
-	if(commandBuffer[0]==pNull){
+	if(commandBuffer[0]==null){
 		return false;
 	}
 	else{
@@ -504,6 +523,97 @@ bool Arduino::update(){
 
 Arduino::Arduino(void){
 	reset();
+}
+
+volatile void Sounds::reset(){
+	currentFreq=0;
+	currentSound.escalating=false;
+	currentSound.start=0;
+	currentSound.end=0;
+	currentSound.interval=0;
+	currentSound.jump = 0;
+	playingSound=false;
+	paused=false;
+	FlexiTimer2::stop();
+	noToneAC();
+}
+
+//simple enough
+
+void Sounds::pause(){
+	if(!paused){
+		currentFreq=0;
+		currentSound.escalating=false;
+		currentSound.start=0;
+		currentSound.end=0;
+		currentSound.interval=0;
+		currentSound.jump = 0;
+		playingSound=false;
+		FlexiTimer2::stop();
+		noToneAC();
+	}
+	paused = !paused;
+}
+
+void Sounds::playSound(const soundProp sound){
+	if(!paused){
+		currentSound.escalating=sound.escalating;
+		currentSound.start=sound.start;
+		currentSound.end=sound.end;
+		currentSound.interval=sound.interval; 
+		currentSound.jump = sound.jump; 
+		#ifdef DEBUG
+		Serial.println("Playing Sound!");
+		Serial.println(currentSound.start);
+		#endif
+		currentFreq=currentSound.start;
+		FlexiTimer2::set(1, (float)(currentSound.interval/1000000), updateSound);
+		FlexiTimer2::start();
+	}
+	playingSound=true;
+}
+
+void Sounds::updateSound(void){ //technicly an ISR
+	toneAC(currentFreq);
+	if(!currentSound.escalating){
+		currentFreq-=currentSound.jump;
+		if(currentFreq<=currentSound.end){
+			reset();
+		}
+	}
+	else{
+		currentFreq+=currentSound.jump;
+		if(currentFreq>=currentSound.end){
+			reset();
+		}
+	}
+}
+
+Bitshift::Bitshift(void){
+	store=0;
+}
+
+Bitshift& Bitshift::operator= (const unsigned int &x){
+	store=x;
+	return *this;
+}
+
+bool Bitshift::grab(unsigned int place) {
+	return store & (1 << place);
+}
+
+void Bitshift::flip(unsigned int place, bool value){
+	#ifdef DEBUG
+	if(value>7||value<0){
+		Serial.println("Value out of bounds!");
+	}
+	#endif
+	if(value){
+		store = store | (1<<place);
+	}
+	else{
+		store = store & ~(1<<place);
+	}
 }
 
 //lasercode
@@ -545,7 +655,7 @@ void intToBool(unsigned int input, unsigned int start, unsigned int len, bool * 
 }
 
 void Suit::setUpPacket(){
-	Bitshift packet;
+	bool packet[13];
 	intToBool(playerID,0,7,packet);
 	intToBool(teamID,7,2,packet);
 	intToBool(currentProfile.damage,9,4,packet);
@@ -1050,8 +1160,7 @@ void Suit::sCommand(SuitCommmands command, int amount){
 				gunCommand(gFullAmmo,0);
 				display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
 				display.playLights(pLightsGameOn);
-				while (display.update()) {}
-				Serial.println("Got Here!");
+				while(display.update()){}
 #if ON_GAME_START == true
 				onGameStart();
 #endif
