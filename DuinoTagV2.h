@@ -13,6 +13,10 @@
 
 #include <MilesDecode.h>
 
+#include <Bitshift.h>
+
+#include <LaserWiFi.h>
+
 #define myByte unsigned int
 
 #define sPacketLength 29 
@@ -22,22 +26,11 @@ const unsigned int frequency = 56;
 void loop();
 void setup();
 class Arduino;
-class Bitshift;
 class Suit;
 class Stats;
 class IRrecv;
 class IRsend;
 /*--MARIMOLE-DEF_END--*/
-//sorry, but it has to be done...
-class Bitshift{
-		public:
-		uint8_t store;
-		bool grab(unsigned int place);
-		Bitshift& operator= (const unsigned int &x);
-		void flip(unsigned int place, bool value);
-		Bitshift();
-};
-// :(
 
 struct packet{
 	Bitshift data1;  //1 bit for packet type, 7 bits for playerID 
@@ -68,6 +61,7 @@ const lightControl pLightsHit[] = {hitOn,playHit,hitOff,over}; //set delay to 25
 const lightControl pLightsGameOn[] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay,over};
 const lightControl pLightsDead[] = {hitOn,playDead,hitOff,over};
 const lightControl pLightsGameOver[] = {allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
+const lightControl pNull[] = {over};
 	//is this cool or what?!
 
 	enum SuitCommmands {  //also includes message packet commands

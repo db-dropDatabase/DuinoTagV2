@@ -207,7 +207,7 @@ void Arduino::reset(){
 	pewOverride=false;
 	idle=false;
 	for(unsigned int i=0; i<5; i++){
-		commandBuffer[i] = NULL;
+		commandBuffer[i] = pNull;
 	}
 	Sounds::reset();
 	noToneAC();
@@ -282,7 +282,7 @@ bool Arduino::update(){
 		neopix.show();
 	}
 	if(newAmmo){
-		#ifdef DEBUG
+		#ifdef VERBOSE_DEBUG
 		Serial.println("Updating ammo!");
 		#endif
 		for(double i=0; i<8.0; i++){
@@ -313,12 +313,14 @@ bool Arduino::update(){
 		return false;
 	}
 	else {
-		if (lightCommand(commandBuffer[0])) {
-			for (unsigned int i = 1; i<5; i++) {
-				commandBuffer[i - 1] = commandBuffer[i];
+		if (commandBuffer[0] != pNull) {
+			if (lightCommand(commandBuffer[0])) {
+				for (unsigned int i = 1; i<5; i++) {
+					commandBuffer[i - 1] = commandBuffer[i];
+				}
+				commandBuffer[4] = pNull;
+				currentStep = 0;
 			}
-			commandBuffer[4] = NULL;
-			currentStep = 0;
 		}
 		if (lastPewTime > 0) {
 			if (millis() - lastPewTime > constDelay / 4) {
@@ -327,7 +329,7 @@ bool Arduino::update(){
 			}
 		}
 	}
-	if(commandBuffer[0]==NULL){
+	if(commandBuffer[0]==pNull){
 		return false;
 	}
 	else{
@@ -337,33 +339,6 @@ bool Arduino::update(){
 
 Arduino::Arduino(void){
 	reset();
-}
-
-Bitshift::Bitshift(void){
-	store=0;
-}
-
-Bitshift& Bitshift::operator= (const unsigned int &x){
-	store=x;
-	return *this;
-}
-
-bool Bitshift::grab(unsigned int place) {
-	return store & (1 << place);
-}
-
-void Bitshift::flip(unsigned int place, bool value){
-	#ifdef DEBUG
-	if(value>7||value<0){
-		Serial.println("Value out of bounds!");
-	}
-	#endif
-	if(value){
-		store = store | (1<<place);
-	}
-	else{
-		store = store & ~(1<<place);
-	}
 }
 
 //lasercode
@@ -766,6 +741,7 @@ bool Suit::sCommand(unsigned int command, unsigned int amount = 0){
 				display.setup(milesHealth(startHealth), currentProfile.clipSize, armor, teamID);
 				display.playLights(pLightsGameOn);
 				while (display.update()) {}
+				Serial.println("Got Here!");
 #if ON_GAME_START == true
 				onGameStart();
 #endif

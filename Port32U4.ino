@@ -1,5 +1,6 @@
 /* File automatically created by MariaMole */
 //#define DEBUG
+#define VERBOSE_DEBUG
 
 #include <DuinoTagV2.h>
 using namespace Sounds;
@@ -7,10 +8,12 @@ using namespace Sounds;
 Suit laser;
 IRrecv recver(recievePin);  // I KNOW I SPELLED IT WRONG
 decode_results results;
+LaserWifi wifi(1,2,3);
 unsigned long int lastTime = 0;
 
 void setup() {
 #ifdef DEBUG
+	wifi.update();
 	Serial.begin(115200);
 	delay(200);
 	Serial.println("Booting up...");
