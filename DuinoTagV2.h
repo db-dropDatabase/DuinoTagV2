@@ -13,6 +13,14 @@
 
 #include <GameMode.h>
 
+#include <Sound.h>
+
+#include <MilesDecode.h>
+
+#include <Bitshift.h>
+
+#include <LaserWiFi.h>
+
 #define myByte unsigned int
 
 #define sPacketLength 29 
@@ -27,7 +35,6 @@ const int frequency = 56;
 void loop();
 void setup();
 class Arduino;
-class Bitshift;
 class Suit;
 class Stats;
 class Lasergun;
@@ -41,16 +48,6 @@ int decodePulse(int pulseLength);
 int boolToInt(bool input[8]);
 void intToBool(unsigned int input, unsigned int start, unsigned int len, char * ray);
 /*--MARIMOLE-DEF_END--*/
-//sorry, but it has to be done...
-class Bitshift{
-		public:
-		unsigned int store;
-		bool grab(unsigned int place);
-		Bitshift& operator= (const unsigned int &x);
-		void flip(unsigned int place, bool value);
-		Bitshift();
-};
-// :(
 
 struct packet{
 	Bitshift data1;  //1 bit for packet type, 7 bits for playerID 
@@ -84,11 +81,12 @@ enum lightControl{
 };
 
 //below are command lists, and can be edited freely, use the commands above
-//const lightControl shoot[15] = {playPew}; not used after playPew function implemented
-const lightControl hit[15] = {hitOn,playHit,hitOff,over}; //set delay to 250 or something
-const lightControl gameOn[15] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay,rightOff,leftOff,over};
-const lightControl dead[15] = {hitOn,playDead,hitOff,over};
-const lightControl gameOver[15] ={allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
+//const lightControl shoot[] = {playPew}; not used after playPew function implemented
+const lightControl pLightsHit[] = {hitOn,playHit,hitOff,over}; //set delay to 250 or something
+const lightControl pLightsGameOn[] = {allOn,playGameOn,muzzleOff,Tdelay,hitOff,Tdelay,over};
+const lightControl pLightsDead[] = {hitOn,playDead,hitOff,over};
+const lightControl pLightsGameOver[] = {allOn,Tdelay,allOff,Tdelay,allOn,Tdelay,allOff,over};
+const lightControl pNull[] = {over};
 	//is this cool or what?!
 
 enum SuitCommmands{  //also includes message packet commands
