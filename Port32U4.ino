@@ -8,12 +8,11 @@ using namespace Sounds;
 Suit laser;
 IRrecv recver(recievePin);  // I KNOW I SPELLED IT WRONG
 decode_results results;
-LaserWifi wifi(1,2,3);
 unsigned long int lastTime = 0;
 
 void setup() {
 #ifdef DEBUG
-	wifi.update();
+	LaserWifi::begin(5);
 	Serial.begin(115200);
 	delay(200);
 	Serial.println("Booting up...");
