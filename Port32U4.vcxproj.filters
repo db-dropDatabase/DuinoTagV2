@@ -13,6 +13,24 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\External Libs">
+      <UniqueIdentifier>{f7f7d25a-6dc8-4edc-998e-e15f36a1c90b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\External Libs">
+      <UniqueIdentifier>{d142245e-68d0-43c3-8b73-834c02457b67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\External Libs\RF24">
+      <UniqueIdentifier>{d7f81fd4-b03c-4042-ac74-1c27bd09e381}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\External Libs\IR Remote">
+      <UniqueIdentifier>{7570b2fd-6eba-46bf-82d1-40e9a2a1f800}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\External Libs\RF24">
+      <UniqueIdentifier>{876b68cd-8068-4298-afb3-39bf72e18fbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\External Libs\IR Remote">
+      <UniqueIdentifier>{a75518b9-f852-4bd7-93b7-a90af7890da1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Port32U4.ino" />
@@ -21,49 +39,115 @@
     <ClCompile Include="DuinoTagV2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Custom IR\IRremote.cpp">
+    <ClCompile Include="GameMode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FlexiTimer\FlexiTimer2.cpp">
+    <ClCompile Include="Sound.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ToneAC\toneAC.cpp">
+    <ClCompile Include="MilesDecode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LaserWiFi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Bitshift.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Neopixel\Adafruit_NeoPixel.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\External Libs</Filter>
     </ClCompile>
-    <ClCompile Include="GameMode.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="FlexiTimer\FlexiTimer2.cpp">
+      <Filter>Source Files\External Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="ToneAC\toneAC.cpp">
+      <Filter>Source Files\External Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="RF24-mesh\RF24Mesh.cpp">
+      <Filter>Source Files\External Libs\RF24</Filter>
+    </ClCompile>
+    <ClCompile Include="RF24-driver\RF24.cpp">
+      <Filter>Source Files\External Libs\RF24</Filter>
+    </ClCompile>
+    <ClCompile Include="RF24-network\RF24Network.cpp">
+      <Filter>Source Files\External Libs\RF24</Filter>
+    </ClCompile>
+    <ClCompile Include="RF24-network\Sync.cpp">
+      <Filter>Source Files\External Libs\RF24</Filter>
+    </ClCompile>
+    <ClCompile Include="Custom IR\IRremote.cpp">
+      <Filter>Source Files\External Libs\IR Remote</Filter>
+    </ClCompile>
+    <ClCompile Include="SPI.cpp">
+      <Filter>Source Files\External Libs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DuinoTagV2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="__vm\.port32U4.vsarduino.h">
+    <ClInclude Include="GameMode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Custom IR\IRremote.h">
+    <ClInclude Include="Sound.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Custom IR\IRremoteInt.h">
+    <ClInclude Include="MilesDecode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FlexiTimer\FlexiTimer2.h">
+    <ClInclude Include="LaserWiFi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ToneAC\toneAC.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__vm\.Github.vsarduino.h">
+    <ClInclude Include="Bitshift.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Neopixel\Adafruit_NeoPixel.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\External Libs</Filter>
     </ClInclude>
-    <ClInclude Include="GameMode.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="FlexiTimer\FlexiTimer2.h">
+      <Filter>Header Files\External Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="ToneAC\toneAC.h">
+      <Filter>Header Files\External Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="__vm\.port32U4.vsarduino.h">
+      <Filter>Header Files\External Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="__vm\.Github.vsarduino.h">
+      <Filter>Header Files\External Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-driver\nRF24L01.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-driver\RF24.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-driver\RF24_config.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-mesh\RF24Mesh.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-mesh\RF24Mesh_config.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-network\RF24Network.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-network\RF24Network_config.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="RF24-network\Sync.h">
+      <Filter>Header Files\External Libs\RF24</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom IR\IRremote.h">
+      <Filter>Header Files\External Libs\IR Remote</Filter>
+    </ClInclude>
+    <ClInclude Include="Custom IR\IRremoteInt.h">
+      <Filter>Header Files\External Libs\IR Remote</Filter>
+    </ClInclude>
+    <ClInclude Include="SPI.h">
+      <Filter>Header Files\External Libs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

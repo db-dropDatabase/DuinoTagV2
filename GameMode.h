@@ -8,8 +8,7 @@
 
 
 //pin configuration
-#define constDelay 250 //make longer to make lights flash for longer,and vice versa
-#define sendPin 5 //never used in code, but still important
+#define sendPin 3 //DO NOT CHANGE
 #define recievePin 15 //IR reciever pin
 #define muzzlePin A1 //muzzle flash
 #define leftPin 6 //left team neopixels
@@ -19,16 +18,21 @@
 #define triggerPin A2 //duh
 #define neoPin 4 //Indicator neopixel pin
 
-//code config
-#define USE_STATS false //stats machine, but no way to report stats currently
-#define DEBUG
-#define VERBOSE_DEBUG
+//Note: pins that CANNOT BE USED because of some hardware conflict are as follows:
+//0,1,3,9,10
+//If the pin comment says DO NOT CHAANGE then it is okay if it uses one of those pins
+//Otherwise, avoid those pins
 
-//game config
-#define IR_SETUP 0  //setting up over IR or with default values in gun
+//code config
+#define constDelay 250 //make longer to make lights flash for longer,and vice versa
+#define USE_STATS false //stats machine, but no way to report stats currently
+#define IR_SETUP false  //setting up over IR or with default values in gun
+//comment out below to disable
+#define DEBUG
+//#define VERBOSE_DEBUG
 
 //default values, will be overriden if IR setup is in place
-#define TEAM 0 //0-3
+#define TEAM 3 //0-3
 #define PLAYER_ID 0 //7 bit player ID, max 127
 #define HEALTH 0x24 //there is a weird table of values this has to conform to, so this would technicly be 100
 #define ARMOR 50
@@ -56,13 +60,9 @@
 //#define FIRE_TYPE 2 //0 semi auto, 1 burst (3), 2 full auto, not implemented
 //#define GUN_SETTING 1 //this property is so weird, I don't think I even understand it.  not implemented
 //#define TIME_LIMIT 0 //minuets, not implemented
-//#define GAMEMODE_ALLOWED true //this is directly from the protocol, but I don't nkow what they mean by gamemode, so not implemented
+//#define GAMEMODE_ALLOWED true //this is directly from the protocol, but I don't know what they mean by gamemode, so not implemented
 //#define ZOMBIE_MODE false //not implemented yet
 //#define BURST_ROUNDS 3 //number of rounds in burst fire mode, not implemented
-
-//below is the main game loop for the gun.
-void gunSetup();
-void gunLoop();
 
 //gun configuration below, only used if CUSTOM_WEAPONS is true
 //otherwise the gun values above are used
@@ -83,16 +83,15 @@ const gunProfile shotgun = { 6, 0, 4, 8, 0xCA };
 //These can be toggled by the defines below
 #define ON_SHOOT false
 #define ON_HIT false
-#define ON_RELOAD_START true
+#define ON_RELOAD_START false
 #define ON_RELOAD_END false
 #define ON_DEATH false
 #define ON_RESPAWN false
-#define ON_OBJECTIVE_START false //flag, bomb, whatever.  all the same trigger b/c it's easier that way
-#define ON_OBJECTIVE_FINISH false
+#define ON_OBJECTIVE false //flag, bomb, whatever.  all the same trigger b/c it's easier that way.  Passes through an integer with the status of the obj. recieved through IR
 #define ON_GAME_START false
-#define ON_GAME_END false
+#define ON_GAME_END true
 #define ON_CUSTOM_EVENT false //very complicated, but will try to implement
-#define CUSTOM_EVENT cAddHealth //use a suit command, which are enumerated in duinotagv2.h
+#define CUSTOM_EVENT cStartGame //use a suit command, which are enumerated in duinotagv2.h
 
 //do not change below values
 #if MAX_RESPAWN != 0 && RESPAWN_ALLOWED

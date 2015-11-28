@@ -44,15 +44,10 @@
 	}
 #endif
 
-#if ON_OBJECTIVE_START== true
-	void Suit::onObjStart(int progress) {
-
-	}
-#endif
-
-#if ON_OBJECTIVE_FINISH == true
-	void Suit::onObjFinish(int progress) {
-
+#if ON_OBJECTIVE == true
+	void Suit::onObj(unsigned int progress) {
+		//DO NOT USE NEGATIVE NUMBERS
+		//sorry, it's just better this way
 	}
 #endif
 
@@ -63,13 +58,20 @@
 #endif
 #if ON_GAME_END == true
 	void Suit::onGameEnd() {
-
+		//Spray and pray mass game end test
+		unsigned int gameEnd[52] = { 2400, 600, 1200, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 1200, 600, 1200, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 600, 1200, 600, 1200, 600, 1200, 600, 1200, 600, 1200, 600, 1200, 600, 600, 600, 1200, 600, 600, 600, 600, 600, 600, 600 };
+		for (int i = 0; i < 25; i++) {
+			delayMicroseconds(100);
+			irsend.sendRaw(gameEnd, 52, frequency);
+			delayMicroseconds(100);
+			delay(250);
+		}
 	}
 #endif
 
 #if ON_CUSTOM_EVENT == true
 	void Suit::onCustomEvent() {
-
+		Serial.println("Custom Event!");
 	}
 #endif
 

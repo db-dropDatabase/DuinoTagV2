@@ -1,13 +1,14 @@
 /* File automatically created by MariaMole */
-#define DEBUG
-#include <DuinoTagV2.h>
+//#define DEBUG
+#define VERBOSE_DEBUG
 
+#include <DuinoTagV2.h>
 using namespace Sounds;
 
 Suit laser;
 IRrecv recver(recievePin);  // I KNOW I SPELLED IT WRONG
 decode_results results;
-long int lastTime = 0;
+unsigned long int lastTime = 0;
 
 void setup() {
 #ifdef DEBUG
@@ -18,6 +19,7 @@ void setup() {
 	recver.enableIRIn();
 #ifdef DEBUG
 	Serial.println("IR initilization done");
+	LaserWifi::begin((uint8_t)1);
 #endif
 #if IR_SETUP == 1
 #ifdef DEBUG
@@ -38,10 +40,10 @@ void setup() {
 	digitalWrite(13, HIGH);
 	delay(5000);
 	digitalWrite(13, LOW);
-	laser.sCommand(cStartGame, 0);
 #if CUSTOM_WEAPONS == true
 	laser.switchGun(DEFAULT_GUN);
 #endif
+	laser.sCommand(cStartGame,0);
 }
 
 
@@ -58,7 +60,9 @@ void loop() {
 #endif
 		lastTime = millis();
 	}
-	if (laser.checkStatus()) {
-		laser.sCommand(cRespawn, 0);
-	}
+	if (laser.checkStatus()) laser.sCommand(cRespawn, 0);
+	LaserWifi::update();
+	if (LaserWifi::update()) LaserWifi::getPacket();
+	delay(100);
+	LaserWifi::sendNode(2, LaserWifi::suitCommand, 27);
 }
