@@ -12,7 +12,6 @@ unsigned long int lastTime = 0;
 
 void setup() {
 #ifdef DEBUG
-	LaserWifi::begin(5);
 	Serial.begin(115200);
 	delay(200);
 	Serial.println("Booting up...");
@@ -20,6 +19,7 @@ void setup() {
 	recver.enableIRIn();
 #ifdef DEBUG
 	Serial.println("IR initilization done");
+	LaserWifi::begin((uint8_t)1);
 #endif
 #if IR_SETUP == 1
 #ifdef DEBUG
@@ -61,4 +61,8 @@ void loop() {
 		lastTime = millis();
 	}
 	if (laser.checkStatus()) laser.sCommand(cRespawn, 0);
+	LaserWifi::update();
+	if (LaserWifi::update()) LaserWifi::getPacket();
+	delay(100);
+	LaserWifi::sendNode(2, LaserWifi::suitCommand, 27);
 }
