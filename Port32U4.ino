@@ -2,67 +2,46 @@
 //#define DEBUG
 #define VERBOSE_DEBUG
 
-#include <DuinoTagV2.h>
-using namespace Sounds;
+#include <Suit.h>
 
-Suit laser;
-IRrecv recver(recievePin);  // I KNOW I SPELLED IT WRONG
-decode_results results;
-unsigned long int lastTime = 0;
+//This code will be split into two sections, one for each of the two boards in lasertag
+//which one you are compiling to can be switched here
+
+#define SUIT_OR_GUN false //false is suit, true is gun
+
+#if SUIT_OR_GUN == false
+//suit code
+
+Suit suit;
+bool firstRun = false;
 
 void setup() {
-#ifdef DEBUG
 	Serial.begin(115200);
-	delay(200);
-	Serial.println("Booting up...");
-#endif
-	recver.enableIRIn();
-#ifdef DEBUG
-	Serial.println("IR initilization done");
-	LaserWifi::begin((uint8_t)1);
-#endif
-#if IR_SETUP == 1
-#ifdef DEBUG
-	Serial.println("Entering setup mode");
-#endif
-	laser.waitForSetup(&recver);
-#else
-	laser.setup(TEAM, PLAYER_ID, &recver);
-#endif
-	//pinMode(triggerPin, INPUT_PULLUP);
-	pinMode(13, OUTPUT); //used as game indicator during setup
-#ifdef DEBUG
-	Serial.println("Suit setup done");
-#endif
-#ifdef DEBUG
-	Serial.println("Starting game in 5 seconds...");
-#endif
-	digitalWrite(13, HIGH);
-	delay(5000);
-	digitalWrite(13, LOW);
-#if CUSTOM_WEAPONS == true
-	laser.switchGun(DEFAULT_GUN);
-#endif
-	laser.sCommand(cStartGame,0);
+	
 }
-
 
 void loop() {
-	if (millis() - lastTime > 200) {
-		
-		if (!laser.gunCommand(gShoot, 0) && !laser.isDead) {
-			laser.gunCommand(gReload, 0);
-		}
-		
-		//playSound(pPew);
-#ifdef DEBUG
-		Serial.println("BANG");
-#endif
-		lastTime = millis();
+	if (!firstRun) {
+		Serial.println("Waiting for setup");
+		suit.setup();
+		Serial.println("Starting game!");
+		suit.startGame();
+		firstRun = true;
 	}
-	if (laser.checkStatus()) laser.sCommand(cRespawn, 0);
-	LaserWifi::update();
-	if (LaserWifi::update()) LaserWifi::getPacket();
-	delay(100);
-	LaserWifi::sendNode(2, LaserWifi::suitCommand, 27);
+	suit.updateI2C();
+	suit.updateIR();
+	suit.updateLights();
 }
+
+#else
+//gun code
+
+
+
+
+
+
+#endif
+
+
+

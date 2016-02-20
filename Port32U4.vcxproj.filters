@@ -31,6 +31,12 @@
     <Filter Include="Source Files\External Libs\IR Remote">
       <UniqueIdentifier>{a75518b9-f852-4bd7-93b7-a90af7890da1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\External Libs\Wire">
+      <UniqueIdentifier>{fe1f5cca-c80b-4aa6-bc82-7b73fcfe8cc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\External Libs\Wire">
+      <UniqueIdentifier>{ff6cd630-87aa-4739-af77-e3ea7c5bb7e7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Port32U4.ino" />
@@ -80,6 +86,27 @@
     </ClCompile>
     <ClCompile Include="SPI.cpp">
       <Filter>Source Files\External Libs</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MilesIR.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LaserCom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Wire\Wire.cpp">
+      <Filter>Source Files\External Libs\Wire</Filter>
+    </ClCompile>
+    <ClCompile Include="Wire\twi.c">
+      <Filter>Source Files\External Libs\Wire</Filter>
+    </ClCompile>
+    <ClCompile Include="Suit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SuitLights.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +175,27 @@
     </ClInclude>
     <ClInclude Include="SPI.h">
       <Filter>Header Files\External Libs</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LaserCom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Wire\Wire.h">
+      <Filter>Header Files\External Libs\Wire</Filter>
+    </ClInclude>
+    <ClInclude Include="Wire\twi.h">
+      <Filter>Header Files\External Libs\Wire</Filter>
+    </ClInclude>
+    <ClInclude Include="Suit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SuitLights.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MilesIR.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,11 +1,29 @@
 #ifndef GAMEMODE_H
 #define GAMEMODE_H
 
+#include <Arduino.h>
+
+//some nice debug stuff
+#if defined(DEBUG) || defined(VERBOSE_DEBUG)
+# define SER_PRINT(...) Serial.print(__VA_ARGS__)
+# define SER_PRINTLN(...) Serial.println(__VA_ARGS__)
+#else
+# define SER_PRINT(...)
+# define SER_PRINTLN(...)
+#endif
+
 //Welcome to the game mode settings file!
 //This file should serve as a dynamic properties file for custom gamemodes
 //Eventually, I would like to add a gui for doing all of this, but text is fine for now
 
+#define myByte unsigned int //do not change
+#define sPacketLength 30 //do not change
+const unsigned int frequency = 56; //change if need to change IR frequency
 
+#define IR_BURST_UPPER 60 //numbers to turn raw lengths of IR into signal, probably don't mess with them
+#define IR_BURST_HEADER 40
+#define IR_BURST_ONE 20
+#define IR_BURST_ZERO 8
 
 //pin configuration
 #define sendPin 3 //DO NOT CHANGE
@@ -20,12 +38,12 @@
 
 //Note: pins that CANNOT BE USED because of some hardware conflict are as follows:
 //0,1,3,9,10
-//If the pin comment says DO NOT CHAANGE then it is okay if it uses one of those pins
+//If the pin comment says DO NOT CHANGE then it is okay if it uses one of those pins
 //Otherwise, avoid those pins
 
 //code config
 #define constDelay 250 //make longer to make lights flash for longer,and vice versa
-#define USE_STATS false //stats machine, but no way to report stats currently
+#define USE_STATS true //stats machine, but no way to report stats currently
 #define IR_SETUP false  //setting up over IR or with default values in gun
 //comment out below to disable
 #define DEBUG
@@ -89,7 +107,7 @@ const gunProfile shotgun = { 6, 0, 4, 8, 0xCA };
 #define ON_RESPAWN false
 #define ON_OBJECTIVE false //flag, bomb, whatever.  all the same trigger b/c it's easier that way.  Passes through an integer with the status of the obj. recieved through IR
 #define ON_GAME_START false
-#define ON_GAME_END true
+#define ON_GAME_END false
 #define ON_CUSTOM_EVENT false //very complicated, but will try to implement
 #define CUSTOM_EVENT cStartGame //use a suit command, which are enumerated in duinotagv2.h
 

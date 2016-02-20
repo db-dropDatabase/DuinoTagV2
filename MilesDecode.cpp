@@ -108,25 +108,4 @@ double MHitDelay(myByte in) {
 	}
 	return out;
 }
-
-unsigned int decodePulse(int pulseLength) {
-	if (pulseLength > IR_BURST_UPPER) {
-#ifdef DEBUG
-		Serial.println("Recieved too long pulse!");
-#endif //debug
-		return -1;
-	}
-	else if (pulseLength > IR_BURST_HEADER) {
-		return -2;
-	}
-	else if (pulseLength > IR_BURST_ONE) {
-		return 1;
-	}
-	else if (pulseLength > IR_BURST_ZERO) {
-		return 0;
-	}
-	else {
-		return -1;
-	}
-}
 #endif //guard
