@@ -13,13 +13,13 @@
 #define __AVR_ATmega32u4__
 #define __AVR_ATmega32U4__
 #define F_CPU 16000000L
-#define ARDUINO 164
+#define ARDUINO 10604
 #define ARDUINO_AVR_PROMICRO16
 #define ARDUINO_ARCH_AVR
 #define USB_VID 0x1B4F
 #define USB_PID 0x9206
 #define USB_MANUFACTURER 
-#define __cplusplus
+#define __cplusplus 201103L
 #define __AVR__
 #define __inline__
 #define __asm__(x)
@@ -101,10 +101,16 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <Custom IR\IRremote.cpp>
 #include <Custom IR\IRremote.h>
 #include <Custom IR\IRremoteInt.h>
+#include <..\Github\LaserCom.cpp>
+#include <..\Github\LaserCom.h>
 #include <..\Github\LaserWiFi.cpp>
 #include <..\Github\LaserWiFi.h>
+#include <..\Github\Lights.cpp>
+#include <..\Github\Lights.h>
 #include <..\Github\MilesDecode.cpp>
 #include <..\Github\MilesDecode.h>
+#include <..\Github\MilesIR.cpp>
+#include <..\Github\MilesIR.h>
 #include <RF24-driver\RF24.cpp>
 #include <RF24-driver\RF24.h>
 #include <RF24-mesh\RF24Mesh.cpp>
@@ -118,9 +124,17 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <..\Github\SPI.h>
 #include <..\Github\Sound.cpp>
 #include <..\Github\Sound.h>
+#include <..\Github\Suit.cpp>
+#include <..\Github\Suit.h>
+#include <..\Github\SuitLights.cpp>
+#include <..\Github\SuitLights.h>
 #include <RF24-network\Sync.cpp>
 #include <RF24-network\Sync.h>
+#include <Wire\Wire.cpp>
+#include <Wire\Wire.h>
 #include <RF24-driver\nRF24L01.h>
 #include <ToneAC\toneAC.cpp>
 #include <ToneAC\toneAC.h>
+#include <Wire\twi.c>
+#include <Wire\twi.h>
 #endif
